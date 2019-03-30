@@ -44,17 +44,4 @@ for i in range(1, len(county_adj_df)):
 
 print(fips_adj_dict)
 
-# fips_codes = "./fips_codes.txt"
-#
-# fips = []
-# counties = []
-#
-# # reading in fips codes
-# with open(fips_codes, "r") as filestream:
-#     for line in filestream:
-#         currentLine = line.split(",")
-#         fips.append(str(currentLine[1]) + str(currentLine[2]))
-#         counties.append((str(currentLine[3]) + ", " + str(currentLine[0])).lower())
-# # creating dictionary with county names and fips codes
-# fips_dict = dict(zip(counties, fips))
-# print(fips_dict)
+# if the "county name" index 5 contains "total migration" or "other" then exclude that row
