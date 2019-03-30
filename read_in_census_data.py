@@ -46,6 +46,8 @@ cols_to_keep = {"Geo_FIPS": "fips", "Geo_NAME": "county_name", "SE_A00001_001": 
                 "SE_A13003C_001": "pov_status_65_plus", "SE_A08001_001": "res_1_year_ago",
                 "SE_A08002B_007": "geo_mobility"}
 
+vars_to_code = {v: k for k, v in cols_to_keep.items()}
+
 col_keys = list(cols_to_keep.keys())
 print(col_keys)
 
@@ -58,3 +60,4 @@ for year in range(2006, 2017):
     census_dfs_cond[year_str] = new_df
 
 print(census_dfs_cond)
+print(census_dfs_cond["2008"].columns.values)
