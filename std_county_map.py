@@ -96,3 +96,18 @@ py.plot(fig, filename='Rate per 100,000 of Chlamydia Data in year 2000')
 
 
 #print(raw_df)
+
+# fips_codes = "./fips_codes.txt"
+#
+# fips = []
+# counties = []
+#
+# # reading in fips codes
+# with open(fips_codes, "r") as filestream:
+#     for line in filestream:
+#         currentLine = line.split(",")
+#         fips.append(str(currentLine[1]) + str(currentLine[2]))
+#         counties.append((str(currentLine[3]) + ", " + str(currentLine[0])).lower())
+# # creating dictionary with county names and fips codes
+# fips_dict = dict(zip(counties, fips))
+# print(fips_dict)

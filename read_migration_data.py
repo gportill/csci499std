@@ -201,32 +201,6 @@ for i in range(0,5): # 1112 to 1516
             elif float(cf2) < 100:
                 cf2 = "0" + str(cf2)
 
-            # if len(cf1) == 1:
-            #     cf1 = "00" + cf1
-            # if len(cf1) == 2:
-            #     cf1 = "0" + cf1
-
-            # if len(sf2) == 1:
-            #     sf2 = "0" + sf2
-            # if len(cf2) == 1:
-            #     cf2 = "00" + cf2
-            # if len(cf2) == 2:
-            #     cf2 = "0" + cf2
-
-            # if float(sf1) < 10:
-            #     sf1 = "0" + str(sf1)
-            # if float(cf1) < 10:
-            #     cf1 = "00" + str(cf1)
-            # if float(cf1) < 100:
-            #     cf1 = "0" + str(cf1)
-            #
-            # if float(sf2) < 10:
-            #     sf2 = "0" + str(sf2)
-            # if float(cf2) < 10:
-            #     cf2 = "00" + str(cf2)
-            # if float(cf2) < 100:
-            #     cf2 = "0" + str(cf2)
-
             dest_fips = sf1 + str(cf1)
 
             ori_fips = str(sf2) + str(cf2)

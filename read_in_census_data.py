@@ -10,7 +10,7 @@ for file in census_files:
     year += 1
     # print(str(year))
     key = str(year)
-    census_dfs[key] = pd.read_csv(file, encoding='latin-1', index_col=False)
+    census_dfs[key] = pd.read_csv(file, encoding='latin-1', index_col=False, dtype=str)
 
 # print(census_dfs["2006"].iloc[0,:])
 
@@ -51,13 +51,9 @@ vars_to_code = {v: k for k, v in cols_to_keep.items()}
 col_keys = list(cols_to_keep.keys())
 print(col_keys)
 
-census_dfs_cond = {}
+census_dfs_cond = {}  # all the census data we need (no health insurance)
 for year in range(2006, 2017):
     year_str = str(year)
     curr_df = census_dfs[year_str]
     new_df = curr_df[col_keys]
-    print(new_df.head(5))
     census_dfs_cond[year_str] = new_df
-
-print(census_dfs_cond)
-print(census_dfs_cond["2008"].columns.values)

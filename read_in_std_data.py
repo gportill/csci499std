@@ -13,7 +13,7 @@ for file in std_files:
     year += 1
     key = str(year)
     std_dfs[key] = pd.read_csv(file, encoding='latin-1')
-    print(std_dfs[key].head(5))
+    # print(std_dfs[key].head(5))
 
 # --------- Read in all fips codes and associate them with county names --------
 fips_codes = "./fips_codes.txt"
@@ -40,11 +40,13 @@ for i in range(2006, 2017):
         if df["Geography"][idx].lower() in fips_dict:
             df["Geography"][idx] = fips_dict[df["Geography"][idx].lower()]
         else:
-            print(df["Geography"][idx].lower())
-            print(idx)
+            # print(df["Geography"][idx].lower())
+            # print(idx)
             to_drop.append(df["Geography"][idx])
 
     # dropping the county names with no fips code
     for x in to_drop:
         df = df[df.Geography != x]
+
+    print(df.head(5))
 # --------- End replacing county names with FIPS codes in Geography column ---------
