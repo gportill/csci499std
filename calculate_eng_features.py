@@ -8,7 +8,7 @@ import read_data
             # find neighbor j's migration rate to county i in mig_dfs for this year
             # find neighbor j's total pop in census data for this year
             # find neighbor's std cases in std data for this year
-            # calculate std_cases / total_pop * mig_rate
+            # expected_infected = calculate std_cases / total_pop * mig_rate
             # add that calculation to the expected_infected variable (so you are adding up expected_infected for all of their neighbors). this number will be the feature in the end.
 
 rd = read_data.ReadData()
@@ -31,6 +31,7 @@ census_df = census_dfs[year]
 std_df = std_dfs[year]
 mig_df = migration_dfs[year]
 
-# census data: "Geo_FIPS", "SE_A00001_001"
+# Columns of data frames that are needed for the migration feature:
+# census data: "Geo_FIPS", "SE_A00001_001" (total population is stored in SE_A00001_001)
 # migration: destination, origin, num_exemps
 # std: Geography, Cases
