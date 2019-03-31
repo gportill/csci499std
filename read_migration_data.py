@@ -1,4 +1,5 @@
 import pandas as pd
+from pathlib import Path
 
 county_adj_file = "./county_adjacency.txt"
 
@@ -26,7 +27,7 @@ for i in range(1, len(county_adj_df)):
     else:
         neighbors.append(county_adj_df.iloc[i, neighbor_name_col].lower())
 
-print(name_adj_dict)
+# print(name_adj_dict)
 
 #### make fips adj dictionary ####
 
@@ -42,7 +43,7 @@ for i in range(1, len(county_adj_df)):
     else:
         neighbors.append(str(county_adj_df.iloc[i, neighbor_fips_col]))
 
-print(fips_adj_dict)
+# print(fips_adj_dict)
 
 # if the "county name" index 5 contains "total migration" or "other" or "tot mig" then exclude that row
 
@@ -55,16 +56,13 @@ state_abbrev = ["AK", "AL", "AR", "AZ", "CA", "CO", "CT", "DC", "DE", "FL", "GA"
                 "NM", "NY", "NC", "ND", "OH", "OK", "OR", "PA", "RI", "SC",
                 "SD", "TN", "TX", "UT", "VT", "VA", "WA", "WV", "WI", "WY"]
 
-year_codes = ["0506", "0607", "0708", "0809", "0910", "1011", "1112", "1213", "1314", "1415", "1516"]
+year_codes = ["0506", "0607", "0708", "0809", "0910", "1011"]
 
 migration_dfs = {}
 # ---------
 
 year = 2006
 for i in range(0, 6):  # 0506 to 1011
-    # print("iiiiiii: " + str(i))
-    # print(year_codes[i])
-    # print("YEAR::::::::" + str(year))
     destination_fips = []
     origin_fips = []
     num_exemptions = []
@@ -102,6 +100,8 @@ for i in range(0, 6):  # 0506 to 1011
         raw_df = raw_df[~raw_df.description.str.contains("Foreign", na=False)]
         raw_df = raw_df[~raw_df.description.str.contains("Non-Migrants", na=False)]
         raw_df = raw_df[~raw_df.description.str.contains("Non-Migrant", na=False)]
+        raw_df = raw_df[~raw_df.description.str.contains("Non-migrants", na=False)]
+        raw_df = raw_df[~raw_df.description.str.contains("Non-migrant", na=False)]
         # print(len(raw_df.index))
         # print(raw_df.head(5))
 
@@ -115,10 +115,6 @@ for i in range(0, 6):  # 0506 to 1011
             origin_fips.append(ori_fips)
             num_exemptions.append(num_exemps)
 
-    print(destination_fips)
-    print(origin_fips)
-    print(num_exemptions)
-
     d = {'destination': destination_fips, 'origin': origin_fips, 'num_exemps': num_exemptions}
     df = pd.DataFrame(d)
     # print(df.head(5))
@@ -127,6 +123,12 @@ for i in range(0, 6):  # 0506 to 1011
     print(migration_dfs[str(year)].head(5))
     print()
     year += 1
+
+
+########## now read 2011-2012 files ##########
+
+year_codes = ["1112", "1213", "1314", "1415", "1516"]
+year = 2012
 
 for i in range(0,5): # 1112 to 1516
     # xls = pd.ExcelFile('path_to_file.xls')
@@ -138,38 +140,101 @@ for i in range(0,5): # 1112 to 1516
         # print("state: " + state)
         state_name = state.lower()
         file = "./migration_data/" + year_codes[i] + "migrationdata/" + year_codes[i] + state_name + ".xls"
+        config = Path(file)
+        if not config.is_file():
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            print("_________________ NO FILE WITH NAME : " + file + " ________________")
+            continue
 
-        full_data = pd.ExcelFile(file)
 
-        raw_df = pd.read_excel(full_data, 'County Inflow', encoding="ISO-8859-1")
+
+        # full_data = pd.ExcelFile(file)
+
         col_names = ["state_fips1", "county_fips1", "state_fips2", "county_fips2", "state", "description",
                      "num_returns",
                      "num_exemptions", "agg_adj_gross_income"]
+        raw_df = pd.read_excel(file, 'County Inflow', encoding="ISO-8859-1", skiprows=6, header=None,
+                               names=col_names, dtype=str)
 
-        raw_df = pd.read_excel(file, encoding="ISO-8859-1", skiprows=8, header=None, names=col_names, dtype=str)
+        # raw_df = pd.read_excel(file, encoding="ISO-8859-1", skiprows=6, header=None, names=col_names, dtype=str)
         # print(len(raw_df.index))
         raw_df = raw_df[~raw_df.description.str.contains("Total", na=False)]
         raw_df = raw_df[~raw_df.description.str.contains("Other", na=False)]
         raw_df = raw_df[~raw_df.description.str.contains("Tot", na=False)]
         raw_df = raw_df[~raw_df.description.str.contains("Foreign", na=False)]
         raw_df = raw_df[~raw_df.description.str.contains("Non-Migrants", na=False)]
+        raw_df = raw_df[~raw_df.description.str.contains("Non-migrants", na=False)]
         raw_df = raw_df[~raw_df.description.str.contains("Non-Migrant", na=False)]
+        raw_df = raw_df[~raw_df.description.str.contains("Non-migrant", na=False)]
+        raw_df = raw_df[~raw_df.state_fips1.str.contains("suppressed", na=False)]
+        raw_df = raw_df[~raw_df.state_fips1.str.contains("aggregates", na=False)]
+        raw_df = raw_df[~raw_df.state_fips1.str.contains("Source", na=False)]
         # print(len(raw_df.index))
         # print(raw_df.head(5))
 
         for j in range(0, len(raw_df)):
             # print(raw_df.iloc[i]['state_fips1'])
-            dest_fips = str(raw_df.iloc[j]['state_fips1']) + str(raw_df.iloc[j]['county_fips1'])
-            ori_fips = str(raw_df.iloc[j]['state_fips2']) + str(raw_df.iloc[j]['county_fips2'])
+            sf1 = raw_df.iloc[j]['state_fips1']
+            cf1 = raw_df.iloc[j]['county_fips1']
+            sf2 = raw_df.iloc[j]['state_fips2']
+            cf2 = raw_df.iloc[j]['county_fips2']
+
+            if len(sf1) < 2:
+                sf1 = "0" + sf1
+            if float(cf1) < 10:
+                cf1 = "00" + str(cf1)
+            elif float(cf1) < 100:
+                cf1 = "0" + str(cf1)
+
+            if float(sf2) < 10:
+                sf2 = "0" + str(sf2)
+            if float(cf2) < 10:
+                cf2 = "00" + str(cf2)
+            elif float(cf2) < 100:
+                cf2 = "0" + str(cf2)
+
+            # if len(cf1) == 1:
+            #     cf1 = "00" + cf1
+            # if len(cf1) == 2:
+            #     cf1 = "0" + cf1
+
+            # if len(sf2) == 1:
+            #     sf2 = "0" + sf2
+            # if len(cf2) == 1:
+            #     cf2 = "00" + cf2
+            # if len(cf2) == 2:
+            #     cf2 = "0" + cf2
+
+            # if float(sf1) < 10:
+            #     sf1 = "0" + str(sf1)
+            # if float(cf1) < 10:
+            #     cf1 = "00" + str(cf1)
+            # if float(cf1) < 100:
+            #     cf1 = "0" + str(cf1)
+            #
+            # if float(sf2) < 10:
+            #     sf2 = "0" + str(sf2)
+            # if float(cf2) < 10:
+            #     cf2 = "00" + str(cf2)
+            # if float(cf2) < 100:
+            #     cf2 = "0" + str(cf2)
+
+            dest_fips = sf1 + str(cf1)
+
+            ori_fips = str(sf2) + str(cf2)
             num_exemps = raw_df.iloc[j]['num_exemptions']
-            # print(dest_fips + " " + ori_fips + " " + num_exemps)
+            # print(str(dest_fips) + " " + str(ori_fips))
             destination_fips.append(dest_fips)
             origin_fips.append(ori_fips)
             num_exemptions.append(num_exemps)
-
-    print(destination_fips)
-    print(origin_fips)
-    print(num_exemptions)
 
     d = {'destination': destination_fips, 'origin': origin_fips, 'num_exemps': num_exemptions}
     df = pd.DataFrame(d)
@@ -179,3 +244,16 @@ for i in range(0,5): # 1112 to 1516
     print(migration_dfs[str(year)].head(5))
     print()
     year += 1
+
+# NO FILE WITH NAME : ./migration_data/1213migrationdata/1213ny.xls
+# NO FILE WITH NAME : ./migration_data/1314migrationdata/1314ut.xls
+# NO FILE WITH NAME : ./migration_data/1314migrationdata/1314va.xls
+
+print(list(migration_dfs.keys()))
+
+# get num_cases for origin from std data[year]
+# get total_pop for origin from census_data[year]
+# divide num_cases by total_pop
+# multiple num_exemps for this destination and origin from migration_dfs[year] to get the
+    # number of infected people expected for this origin going to this county
+# add up the expected_infected for destination (iterate over all their origins)
