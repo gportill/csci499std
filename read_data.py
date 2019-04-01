@@ -9,14 +9,20 @@ class County:
         self.year_to_pop_dict = {}  # {"year" : pop_for_year}
         self.year_to_mig_dict = {}  # {"year" : {dest_county:num_exemps, dest_count:num+exemps} }
 
+    def getFips(self):
+        return self.fips
+
     def setNeighbors(self, neighbors):
         self.neighbors = neighbors
+        # print(self.neighbors)
 
     def addCases(self, year, cases):
         self.year_to_cases_dict[year] = cases
+        # print(self.year_to_cases_dict)
 
     def addPop(self, year, pop):
         self.year_to_pop_dict[year] = pop
+        # print(self.year_to_pop_dict)
 
     def addMig(self, year, dict_of_destinations_to_num_exemps):
         self.year_to_mig_dict[year] = dict_of_destinations_to_num_exemps
@@ -25,10 +31,6 @@ class County:
         if fips in self.neighbors:
             return True
         return False
-
-    # def printCountyInfo(self):
-    #     print("FIPS: " + )
-
 
 ## -------- IMPORTANT: When using this class, call the functions in this order:
 ## 1. read_std_data
@@ -61,7 +63,6 @@ class ReadData:
 
         for file in census_files:
             year += 1
-            # print(str(year))
             key = str(year)
             census_dfs[key] = pd.read_csv(file, encoding='latin-1', index_col=False, dtype=str)
 
@@ -80,7 +81,6 @@ class ReadData:
         vars_to_code = {v: k for k, v in cols_to_keep.items()}
 
         col_keys = list(cols_to_keep.keys())
-        print(col_keys)
 
         census_dfs_cond = {}  # all the census data we need (no health insurance)
         for year in range(2006, 2017):
@@ -94,9 +94,24 @@ class ReadData:
             for idx, val in df.iterrows():
                 fips = df["Geo_FIPS"][idx]
                 pop = df["SE_A00001_001"][idx]
-                county_obj = self.fips_to_county_dict[fips]
-                county_obj.addPop(str(i), pop)
+                # print("type of stcd in census: " + str(type(self.fips_to_county_dict)))
 
+                if fips in self.fips_to_county_dict.keys():
+                    county_obj = self.fips_to_county_dict[fips]
+                    # print("type of CO in census: " + str(type(county_obj)))
+                    # ****Why does county_obj come back as a list??
+                    # print(county_obj)
+                    # print("COUNTY OBJ: " + ''.join(county_obj))  ###
+                    county_obj.addPop(str(i), pop)
+                else:
+                    print("cannot add population information to county " + fips + " for year " + str(i))
+        # for i in range(2006, 2017):
+        #     df = std_dfs[str(i)]
+        #     for idx, val in df.iterrows():
+        #         fips = df["Geography"][idx]
+        #         cases = df["Cases"][idx]
+        #         county_obj = self.fips_to_county_dict[fips]
+        #         county_obj.addCases(str(i), cases)
         return census_dfs_cond
 
     def read_std_data(self):
@@ -116,7 +131,7 @@ class ReadData:
             year += 1
             key = str(year)
             std_dfs[key] = pd.read_csv(file, encoding='latin-1')
-            print(std_dfs[key].head(5))
+            # (std_dfs[key].head(5))
 
         # --------- Read in all fips codes and associate them with county names --------
         fips_codes = "./fips_codes.txt"
@@ -144,8 +159,6 @@ class ReadData:
                 if df["Geography"][idx].lower() in fips_dict:
                     df["Geography"][idx] = fips_dict[df["Geography"][idx].lower()]
                 else:
-                    print(df["Geography"][idx].lower())
-                    print(idx)
                     to_drop.append(df["Geography"][idx])
 
             # dropping the county names with no fips code
@@ -153,8 +166,9 @@ class ReadData:
                 df = df[df.Geography != x]
         # --------- End replacing county names with FIPS codes in Geography column ---------
 
-        for idx, val in std_dfs["2006"].iterrows():
-            fips = df["Geography"][idx]
+        df = std_dfs["2006"]
+        for idx in range(0, len(std_dfs["2006"])):
+            fips = df.iloc[idx]["Geography"]
             county_obj = County(fips)
             self.fips_to_county_dict[fips] = county_obj
 
@@ -213,7 +227,6 @@ class ReadData:
                              "num_exemptions", "agg_adj_gross_income"]
 
                 raw_df = pd.read_excel(file, encoding="ISO-8859-1", skiprows=8, header=None, names=col_names, dtype=str)
-                # print(len(raw_df.index))
                 raw_df = raw_df[~raw_df.description.str.contains("Total", na=False)]
                 raw_df = raw_df[~raw_df.description.str.contains("Other", na=False)]
                 raw_df = raw_df[~raw_df.description.str.contains("Tot", na=False)]
@@ -222,26 +235,18 @@ class ReadData:
                 raw_df = raw_df[~raw_df.description.str.contains("Non-Migrant", na=False)]
                 raw_df = raw_df[~raw_df.description.str.contains("Non-migrants", na=False)]
                 raw_df = raw_df[~raw_df.description.str.contains("Non-migrant", na=False)]
-                # print(len(raw_df.index))
-                # print(raw_df.head(5))
 
                 for j in range(0, len(raw_df)):
-                    # print(raw_df.iloc[i]['state_fips1'])
                     dest_fips = str(raw_df.iloc[j]['state_fips1']) + str(raw_df.iloc[j]['county_fips1'])
                     ori_fips = str(raw_df.iloc[j]['state_fips2']) + str(raw_df.iloc[j]['county_fips2'])
                     num_exemps = raw_df.iloc[j]['num_exemptions']
-                    # print(dest_fips + " " + ori_fips + " " + num_exemps)
                     destination_fips.append(dest_fips)
                     origin_fips.append(ori_fips)
                     num_exemptions.append(num_exemps)
 
             d = {'destination': destination_fips, 'origin': origin_fips, 'num_exemps': num_exemptions}
             df = pd.DataFrame(d)
-            # print(df.head(5))
             migration_dfs[str(year)] = df
-            print("year: " + str(year))
-            print(migration_dfs[str(year)].head(5))
-            print()
             year += 1
 
         ########## now read 2011-2012 files ##########
@@ -256,7 +261,6 @@ class ReadData:
             num_exemptions = []
 
             for state in state_abbrev:
-                # print("state: " + state)
                 state_name = state.lower()
                 file = "./migration_data/" + year_codes[i] + "migrationdata/" + year_codes[i] + state_name + ".xls"
                 config = Path(file)
@@ -288,7 +292,6 @@ class ReadData:
 
 
                 for j in range(0, len(raw_df)):
-                    # print(raw_df.iloc[i]['state_fips1'])
                     sf1 = raw_df.iloc[j]['state_fips1']
                     cf1 = raw_df.iloc[j]['county_fips1']
                     sf2 = raw_df.iloc[j]['state_fips2']
@@ -312,18 +315,13 @@ class ReadData:
 
                     ori_fips = str(sf2) + str(cf2)
                     num_exemps = raw_df.iloc[j]['num_exemptions']
-                    # print(str(dest_fips) + " " + str(ori_fips))
                     destination_fips.append(dest_fips)
                     origin_fips.append(ori_fips)
                     num_exemptions.append(num_exemps)
 
             d = {'destination': destination_fips, 'origin': origin_fips, 'num_exemps': num_exemptions}
             df = pd.DataFrame(d)
-            # print(df.head(5))
             migration_dfs[str(year)] = df
-            print("year: " + str(year))
-            print(migration_dfs[str(year)].head(5))
-            print()
             year += 1
 
         # NO FILE WITH NAME : ./migration_data/1213migrationdata/1213ny.xls
@@ -359,9 +357,7 @@ class ReadData:
             else:
                 neighbors.append(county_adj_df.iloc[i, neighbor_name_col].lower())
 
-        # print(name_adj_dict)
-
-        #### make fips adj dictionary ####
+        ### make fips adj dictionary ###
 
         curr_county = str(county_adj_df.iloc[0, fips_col])
         neighbors = []
@@ -370,7 +366,11 @@ class ReadData:
             if not pd.isnull(county_adj_df.iloc[i, fips_col]) and i > 1:  # new_county
                 # add current list to old_county in dictionary
                 fips_adj_dict[curr_county] = neighbors
-                self.fips_to_county_dict[curr_county] = neighbors
+                if curr_county in self.fips_to_county_dict.keys():
+                    county_obj = self.fips_to_county_dict[curr_county]
+                    county_obj.setNeighbors(neighbors)
+                else:
+                    print("No std info for county " + curr_county + " so cannot add neighbors to county with that fips")
                 neighbors = []
                 curr_county = str(county_adj_df.iloc[i, fips_col])
             else:
