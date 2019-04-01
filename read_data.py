@@ -1,12 +1,41 @@
 import pandas as pd
 from pathlib import Path
 
+class County:
+    def __init__(self, fips):
+        self.fips = fips  # string
+        self.neighbors = []
+        self.year_to_cases_dict = {}  # {"year" : cases_for_year}
+        self.year_to_pop_dict = {}  # {"year" : pop_for_year}
+        self.year_to_mig_dict = {}  # {"year" : {dest_county:num_exemps, dest_count:num+exemps} }
+
+    def setNeighbors(self, neighbors):
+        self.neighbors = neighbors
+
+    def addCases(self, year, cases):
+        self.year_to_cases_dict[year] = cases
+
+    def addPop(self, year, pop):
+        self.year_to_pop_dict[year] = pop
+
+    def addMig(self, year, dict_of_destinations_to_num_exemps):
+        self.year_to_mig_dict[year] = dict_of_destinations_to_num_exemps
+
+    def isNeighborOf(self, fips):
+        if fips in self.neighbors:
+            return True
+        return False
+
+    # def printCountyInfo(self):
+    #     print("FIPS: " + )
+
+
 class ReadData:
     def __init__(self):
-        print("init")
         self.county_to_fips_dict = {}
-        self.census_pop_total_dict = {}  # TODO maps YEAR to dictionary item of county:total_pop
-        self.mig_dest_ori_num_dict = {} # TODO maps destination county FIPS to dictionary item of origin:num_people_who_moved_to_destination
+        # self.census_pop_total_dict = {}  # TODO maps YEAR to dictionary item of county:total_pop
+        # self.mig_dest_ori_num_dict = {} # TODO maps destination county FIPS to dictionary item of origin:num_people_who_moved_to_destination
+        self.fips_to_county_dict = {}
 
     def read_census_data(self):
         census_files = ["./census_data/2006_census_with_total_pop.csv", "./census_data/2007_census_with_total_pop.csv",
@@ -49,6 +78,14 @@ class ReadData:
             curr_df = census_dfs[year_str]
             new_df = curr_df[col_keys]
             census_dfs_cond[year_str] = new_df
+
+        for i in range(2006, 2017):
+            df = census_dfs_cond[str(i)]
+            for idx, val in df.iterrows():
+                fips = df["Geo_FIPS"][idx]
+                pop = df["SE_A00001_001"][idx]
+                county_obj = self.fips_to_county_dict[fips]
+                county_obj.addPop(str(i), pop)
 
         return census_dfs_cond
 
@@ -105,6 +142,19 @@ class ReadData:
             for x in to_drop:
                 df = df[df.Geography != x]
         # --------- End replacing county names with FIPS codes in Geography column ---------
+
+        for idx, val in std_dfs["2006"].iterrows():
+            fips = df["Geography"][idx]
+            county_obj = County(fips)
+            self.fips_to_county_dict[fips] = county_obj
+
+        for i in range(2006, 2017):
+            df = std_dfs[str(i)]
+            for idx, val in df.iterrows():
+                fips = df["Geography"][idx]
+                cases = df["Cases"][idx]
+                county_obj = self.fips_to_county_dict[fips]
+                county_obj.addCases(str(i), cases)
 
         return std_dfs
 
@@ -310,10 +360,10 @@ class ReadData:
             if not pd.isnull(county_adj_df.iloc[i, fips_col]) and i > 1:  # new_county
                 # add current list to old_county in dictionary
                 fips_adj_dict[curr_county] = neighbors
+                self.fips_to_county_dict[curr_county] = neighbors
                 neighbors = []
                 curr_county = str(county_adj_df.iloc[i, fips_col])
             else:
                 neighbors.append(str(county_adj_df.iloc[i, neighbor_fips_col]))
 
-        # print(fips_adj_dict)
         return fips_adj_dict
