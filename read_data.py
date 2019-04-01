@@ -30,12 +30,22 @@ class County:
     #     print("FIPS: " + )
 
 
+## -------- IMPORTANT: When using this class, call the functions in this order:
+## 1. read_std_data
+## 2. read_county_neighbors
+## 3. read_census_data
+## 4. migration_data
+## 5. get_fips_to_county_dict
+
 class ReadData:
     def __init__(self):
         self.county_to_fips_dict = {}
         # self.census_pop_total_dict = {}  # TODO maps YEAR to dictionary item of county:total_pop
         # self.mig_dest_ori_num_dict = {} # TODO maps destination county FIPS to dictionary item of origin:num_people_who_moved_to_destination
         self.fips_to_county_dict = {}
+
+    def get_fips_to_county_dict(self):
+        return self.fips_to_county_dict
 
     def read_census_data(self):
         census_files = ["./census_data/2006_census_with_total_pop.csv", "./census_data/2007_census_with_total_pop.csv",

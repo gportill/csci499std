@@ -12,10 +12,11 @@ import read_data
             # add that calculation to the expected_infected variable (so you are adding up expected_infected for all of their neighbors). this number will be the feature in the end.
 
 rd = read_data.ReadData()
+std_dfs = rd.read_std_data()
 adj_fips_dict = rd.read_county_neighbors()
 census_dfs = rd.read_census_data()
-std_dfs = rd.read_std_data()
 migration_dfs = rd.read_migration_data()
+fips_to_county_dict = rd.get_fips_to_county_dict()
 
 years = []
 for i in range(2006, 2017):
