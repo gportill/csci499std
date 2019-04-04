@@ -2,6 +2,8 @@
 
 ### Important files ###
 
+* assemble_full_df.py: Assembles a single data frame with year, fips, census variables, and STD cases per county. 
+
 * calculate_eng_features.py: File where engineered features will be calculated. Currently working on migration feature => *start here*
 
 * read_data.py: Class for reading in census data, std data, migration data (raw numbers), and county/neighbors dictionary.
