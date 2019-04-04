@@ -115,80 +115,6 @@ print("reading adj_fips_dict")
 adj_fips_dict = rd.read_county_neighbors()
 print("reading census_data")
 census_dfs = rd.read_census_data()
-
-
-
-
-# -------------------------------------
-fips_to_county_dict = rd.get_fips_to_county_dict()
-col_data = [[] for i in range(95)]  # array of empty lists.
-# index 0 is year
-# indices 1 to 94 are census data
-# index 95 is std cases
-# index 96 is infected_inflow
-
-for i in range(2006, 2017):
-    year = str(i)
-    census_df = census_dfs[year]
-
-    # loop over rows in this year's census data
-    for idx, val in census_df.iterrows():
-        fips = census_df["Geo_FIPS"][idx]
-        if fips in fips_to_county_dict.keys():  # skip any counties whose FIPS are not in fips_to_county_dict
-            county = fips_to_county_dict[fips]  # county is a county object
-        else:
-            continue
-
-        col_data[0].append(i)  # set year for this row
-
-        # adding census data for all the census columns we want to keep
-        for k in range(0, len(cols_to_keep_list)):
-            curr_column = cols_to_keep_list[k]
-            value = census_df[curr_column][idx]
-            col_data[k+1].append(value)  # fix ****** ask
-
-        # now columns 0 and 1-94 are filled
-
-        # add cases info
-        cases = county.year_to_cases_dict[year]
-        col_data[94].append(cases)
-
-        # add infected_inflow data
-        # inflow_df = year_to_county_to_STD_inflows[year]
-        # col_data[96].append(inflow_df[county.fips])
-
-census_col_names = census_dfs["2006"].columns
-descriptive_census_col_names = []
-for i in range(0, len(census_col_names)):
-    descriptive_census_col_names.append(cols_to_keep[census_col_names[i]])
-
-column_names = ['year']
-for i in range(0, len(descriptive_census_col_names)):
-    column_names.append(descriptive_census_col_names[i])
-column_names.append('rate')
-# column_names.append('infected_inflow')
-
-data_with_col_names = dict(zip(column_names, col_data))
-full_df = pd.DataFrame(data_with_col_names)
-# column_names is header
-# col_data has all the information, one list per column
-
-print(full_df.head())
-
-
-
-
-
-# -------------------------------------
-
-
-
-
-
-
-
-
-
 print("before migration_dfs")
 migration_dfs = rd.read_migration_data()
 print("after migration_dfs")
@@ -249,12 +175,11 @@ for i in range(2006,2017):
 # census_df[census_df["Geo_FIPS"] == 1001]["SE_A00001_001"].item()
 
 # --------- Compiling everything into one data frame ---------
-
-col_data = [[] for i in range(97)]  # array of empty lists.
+col_data = [[] for i in range(96)]  # array of empty lists.
 # index 0 is year
-# indices 1 to 94 are census data
-# index 95 is std cases
-# index 96 is infected_inflow
+# indices 1 to 93 are census data
+# index 94 is std cases
+# index 95 is infected_inflow
 
 for i in range(2006, 2017):
     year = str(i)
@@ -270,20 +195,21 @@ for i in range(2006, 2017):
 
         col_data[0].append(i)  # set year for this row
 
-        for k in (0, len(cols_to_keep)):
+        # adding census data for all the census columns we want to keep
+        for k in range(0, len(cols_to_keep_list)):
             curr_column = cols_to_keep_list[k]
             value = census_df[curr_column][idx]
             col_data[k+1].append(value)  # fix ****** ask
 
-        # now columns 0 and 1-94 are filled
+        # now columns 0 and 1-93 are filled
 
         # add cases info
         cases = county.year_to_cases_dict[year]
-        col_data[95].append(cases)
+        col_data[94].append(cases)
 
         # add infected_inflow data
         inflow_df = year_to_county_to_STD_inflows[year]
-        col_data[96].append(inflow_df[county.fips])
+        col_data[95].append(inflow_df[county.fips])
 
 census_col_names = census_dfs["2006"].columns
 descriptive_census_col_names = []
