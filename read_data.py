@@ -66,7 +66,8 @@ class ReadData:
             key = str(year)
             census_dfs[key] = pd.read_csv(file, encoding='latin-1', index_col=False, dtype=str)
 
-        cols_to_keep = { "SE_A00001_001": "total_pop",
+        cols_to_keep = {"Geo_FIPS": "fips",
+                "SE_A00001_001": "total_pop",
                 "SE_A00002_001": "pop_density",
                 "SE_A02001_002": "male",
                 "SE_A02001_003": "female",
