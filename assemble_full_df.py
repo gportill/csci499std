@@ -106,6 +106,29 @@ cols_to_keep = {"Geo_FIPS": "fips",
                 "SE_A13001A_002": "poverty_status_white_alone_below_poverty_level",
                 "SE_A13001B_002": "poverty_status_black_alone_below_poverty_level"}
 
+cols_with_na = ['race_white_alone', 'race_black', 'race_american_indian_alaska_native_alone', 'race_asian_alone',
+    'race_native_hawaiian', 'race_other_race_alone', 'race_two_races', 'not_hispanic_total',
+    'not_hispanic_white_alone', 'not_hispanic_black', 'not_hispanic_american_indian',
+    'not_hispanic_asian_alone', 'not_hispanic_native_hawaiian', 'not_hispanic_other_race_alone',
+    'not_hispanic_two_races', 'hispanic_total', 'hispanic_white_alone', 'hispanic_black',
+    'hispanic_american_indian', 'hispanic_asian_alone', 'hispanic_native_hawaiian',
+    'hispanic_other_race_alone', 'hispanic_two_races', 'edu_attainment_less_than_high_school',
+    'edu_attainment_high_school_grad', 'edu_attainment_some_college', 'edu_attainment_bach_degree',
+    'edu_attainment_masters_degree', 'edu_attainment_professional_school_degree',
+    'edu_attainment_doctorate_degree', 'school_dropout_16_to_19_not_hs_graduate',
+    'school_dropout_hs_graduate', 'employment_status_16_plus_IN_labor_force',
+    'employment_status_16_plus_in_armed_forces', 'employment_status_16_plus_civilian',
+    'employment_status_16_plus_civilian_employed', 'employment_status_16_plus_civilian_unemployed',
+    'employment_status_16_plus_not_in_labor_force', 'employment_rate', 'unemployment_rate',
+    'poverty_status_12mo_families_with_income_below_poverty_level',
+    'poverty_status_12mo_family_type_married_with_children', 'poverty_status_12mo_family_type_married_no_children',
+    'poverty_status_12mo_family_type_malehouseholder_nowife_with_children',
+    'poverty_status_12mo_family_type_malehouseholder_nowife_no_children',
+    'poverty_status_12mo_family_type_femalehouseholder_nohusband_with_children',
+    'poverty_status_12mo_family_type_num_', 'poverty_status_12mo_family_type_num',
+    'poverty_status_white_alone_below_poverty_level', 'poverty_status_black_alone_below_poverty_level']
+
+
 cols_to_keep_list = list(cols_to_keep.keys())
 
 rd = read_data.ReadData()
@@ -127,7 +150,10 @@ col_data = [[] for i in range(95)]  # array of empty lists.
 # index 95 is std cases
 # index 96 is infected_inflow
 
+col_data_no_nan = [[] for i in range(45)]
+
 for i in range(2006, 2017):
+    curr_col_num = 0
     year = str(i)
     census_df = census_dfs[year]
 
@@ -140,18 +166,26 @@ for i in range(2006, 2017):
             continue
 
         col_data[0].append(i)  # set year for this row
+        col_data_no_nan[0].append(i)
 
         # adding census data for all the census columns we want to keep
+        curr_col_num = 1
         for k in range(0, len(cols_to_keep_list)):
             curr_column = cols_to_keep_list[k]
             value = census_df[curr_column][idx]
-            col_data[k+1].append(value)  # fix ****** ask
+            col_data[k+1].append(value)
+            # print(cols_to_keep_list[k])
+            if cols_to_keep_list[k] in cols_with_na:
+                print(curr_col_num)
+                col_data_no_nan[curr_col_num].append(value)  # problem
+                curr_col_num += 1
 
         # now columns 0 and 1-94 are filled
 
         # add cases info
         cases = county.year_to_cases_dict[year]
         col_data[94].append(cases)
+        col_data_no_nan[44].append(cases)
 
         # add infected_inflow data
         # inflow_df = year_to_county_to_STD_inflows[year]
@@ -159,8 +193,16 @@ for i in range(2006, 2017):
 
 census_col_names = census_dfs["2006"].columns
 descriptive_census_col_names = []
+col_names_no_na = ['year']
 for i in range(0, len(census_col_names)):
     descriptive_census_col_names.append(cols_to_keep[census_col_names[i]])
+    if cols_to_keep[census_col_names[i]] not in cols_with_na:
+        col_names_no_na.append(cols_to_keep[census_col_names[i]])
+
+col_names_no_na.append('rate')
+
+print("len of data_no_nan: " + str(len(col_data_no_nan)))
+print("len cnnn: " + str(len(col_names_no_na)))
 
 column_names = ['year']
 for i in range(0, len(descriptive_census_col_names)):
@@ -168,17 +210,25 @@ for i in range(0, len(descriptive_census_col_names)):
 column_names.append('rate')
 # column_names.append('infected_inflow')
 
+data_with_col_names_no_na = dict(zip(col_names_no_na, col_data_no_nan))
+
 data_with_col_names = dict(zip(column_names, col_data))
 full_df = pd.DataFrame(data_with_col_names)
+# full_df_no_nan = pd.DataFrame(data_with_col_names_no_na)
 # column_names is header
 # col_data has all the information, one list per column
+full_df_no_na = full_df.copy()
+full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
+# full_df_no_na = full_df_no_na[~full_df_no_na.isin(['NaN']).any(axis=1)]
 
 print(full_df.head())
+print(full_df_no_na.head())
 
-# print(full_df.loc[:, "fips"])
-# print(full_df.loc[:, "age_15_to_17"])  # printing column values just to check
+# full_df.to_excel("full_features_no_mig.xlsx", na_rep="nan")
+full_df_no_na.to_excel("full_features_no_mig_NO_NAN.xlsx", na_rep="nan")
 
-full_df.to_excel("full_features_no_mig.xlsx", na_rep="nan")
+# figure out which columns have NaN values
+# cols_with_na = full_df.columns[full_df.isna().any()].tolist()
 
 # -------------------------------------
 
