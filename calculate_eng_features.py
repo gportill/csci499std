@@ -125,7 +125,7 @@ for i in range(2006, 2017):
     years.append(str(i))
 
 # --------- below this line working on creating infected migration map inflow for all years
-
+print("before inflow")
 year_to_county_to_STD_inflows = {}
 
 #for each year
@@ -162,6 +162,13 @@ for i in range(2006,2017):
             num_exemp_rows = mig_df[(mig_df["destination"] == destination) & (mig_df["origin"] == origin)]["num_exemps"]
             if len(num_exemp_rows) == 0:
                 num_exemps = 0;
+            elif len(num_exemp_rows) > 1:
+                print("num_exemp_rows greater than 1")
+                print(destination)
+                print(origin)
+                num_exemps = 0; #I haven't figured out how to get just the value in the first row, but if anyone else knows the syntax for it, pls update
+                #num_exemps = float(mig_df[(mig_df["destination"] == destination) & (mig_df["origin"] == origin)][0]["num_exemps"].item())
+
             else:
                 num_exemps = float(mig_df[(mig_df["destination"] == destination) & (mig_df["origin"] == origin)]["num_exemps"].item())
             infected_flow = infected_ratio * num_exemps
@@ -170,6 +177,7 @@ for i in range(2006,2017):
         dest_to_inflow[destination] = total_infected_inflow
     #add dictionary to dictionary
     year_to_county_to_STD_inflows[str(i)] = dest_to_inflow
+print("after inflow")
 
 # need this line?
 # census_df[census_df["Geo_FIPS"] == 1001]["SE_A00001_001"].item()

@@ -150,10 +150,7 @@ col_data = [[] for i in range(95)]  # array of empty lists.
 # index 95 is std cases
 # index 96 is infected_inflow
 
-col_data_no_nan = [[] for i in range(45)]
-
 for i in range(2006, 2017):
-    curr_col_num = 0
     year = str(i)
     census_df = census_dfs[year]
 
@@ -166,26 +163,19 @@ for i in range(2006, 2017):
             continue
 
         col_data[0].append(i)  # set year for this row
-        col_data_no_nan[0].append(i)
 
         # adding census data for all the census columns we want to keep
-        curr_col_num = 1
         for k in range(0, len(cols_to_keep_list)):
             curr_column = cols_to_keep_list[k]
             value = census_df[curr_column][idx]
             col_data[k+1].append(value)
             # print(cols_to_keep_list[k])
-            if cols_to_keep_list[k] in cols_with_na:
-                print(curr_col_num)
-                col_data_no_nan[curr_col_num].append(value)  # problem
-                curr_col_num += 1
 
         # now columns 0 and 1-94 are filled
 
         # add cases info
         cases = county.year_to_cases_dict[year]
         col_data[94].append(cases)
-        col_data_no_nan[44].append(cases)
 
         # add infected_inflow data
         # inflow_df = year_to_county_to_STD_inflows[year]
@@ -201,16 +191,11 @@ for i in range(0, len(census_col_names)):
 
 col_names_no_na.append('rate')
 
-print("len of data_no_nan: " + str(len(col_data_no_nan)))
-print("len cnnn: " + str(len(col_names_no_na)))
-
 column_names = ['year']
 for i in range(0, len(descriptive_census_col_names)):
     column_names.append(descriptive_census_col_names[i])
 column_names.append('rate')
 # column_names.append('infected_inflow')
-
-data_with_col_names_no_na = dict(zip(col_names_no_na, col_data_no_nan))
 
 data_with_col_names = dict(zip(column_names, col_data))
 full_df = pd.DataFrame(data_with_col_names)
@@ -224,8 +209,8 @@ full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
 print(full_df.head())
 print(full_df_no_na.head())
 
-# full_df.to_excel("full_features_no_mig.xlsx", na_rep="nan")
-full_df_no_na.to_excel("full_features_no_mig_NO_NAN.xlsx", na_rep="nan")
+full_df.to_excel("full_features_no_mig1.xlsx", na_rep="nan")
+full_df_no_na.to_excel("full_features_no_mig_NO_NAN1.xlsx", na_rep="nan")
 
 # figure out which columns have NaN values
 # cols_with_na = full_df.columns[full_df.isna().any()].tolist()
