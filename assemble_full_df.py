@@ -106,29 +106,6 @@ cols_to_keep = {"Geo_FIPS": "fips",
                 "SE_A13001A_002": "poverty_status_white_alone_below_poverty_level",
                 "SE_A13001B_002": "poverty_status_black_alone_below_poverty_level"}
 
-cols_with_na = ['race_white_alone', 'race_black', 'race_american_indian_alaska_native_alone', 'race_asian_alone',
-    'race_native_hawaiian', 'race_other_race_alone', 'race_two_races', 'not_hispanic_total',
-    'not_hispanic_white_alone', 'not_hispanic_black', 'not_hispanic_american_indian',
-    'not_hispanic_asian_alone', 'not_hispanic_native_hawaiian', 'not_hispanic_other_race_alone',
-    'not_hispanic_two_races', 'hispanic_total', 'hispanic_white_alone', 'hispanic_black',
-    'hispanic_american_indian', 'hispanic_asian_alone', 'hispanic_native_hawaiian',
-    'hispanic_other_race_alone', 'hispanic_two_races', 'edu_attainment_less_than_high_school',
-    'edu_attainment_high_school_grad', 'edu_attainment_some_college', 'edu_attainment_bach_degree',
-    'edu_attainment_masters_degree', 'edu_attainment_professional_school_degree',
-    'edu_attainment_doctorate_degree', 'school_dropout_16_to_19_not_hs_graduate',
-    'school_dropout_hs_graduate', 'employment_status_16_plus_IN_labor_force',
-    'employment_status_16_plus_in_armed_forces', 'employment_status_16_plus_civilian',
-    'employment_status_16_plus_civilian_employed', 'employment_status_16_plus_civilian_unemployed',
-    'employment_status_16_plus_not_in_labor_force', 'employment_rate', 'unemployment_rate',
-    'poverty_status_12mo_families_with_income_below_poverty_level',
-    'poverty_status_12mo_family_type_married_with_children', 'poverty_status_12mo_family_type_married_no_children',
-    'poverty_status_12mo_family_type_malehouseholder_nowife_with_children',
-    'poverty_status_12mo_family_type_malehouseholder_nowife_no_children',
-    'poverty_status_12mo_family_type_femalehouseholder_nohusband_with_children',
-    'poverty_status_12mo_family_type_num_', 'poverty_status_12mo_family_type_num',
-    'poverty_status_white_alone_below_poverty_level', 'poverty_status_black_alone_below_poverty_level']
-
-
 cols_to_keep_list = list(cols_to_keep.keys())
 
 rd = read_data.ReadData()
@@ -183,13 +160,8 @@ for i in range(2006, 2017):
 
 census_col_names = census_dfs["2006"].columns
 descriptive_census_col_names = []
-col_names_no_na = ['year']
 for i in range(0, len(census_col_names)):
     descriptive_census_col_names.append(cols_to_keep[census_col_names[i]])
-    if cols_to_keep[census_col_names[i]] not in cols_with_na:
-        col_names_no_na.append(cols_to_keep[census_col_names[i]])
-
-col_names_no_na.append('rate')
 
 column_names = ['year']
 for i in range(0, len(descriptive_census_col_names)):
@@ -199,21 +171,14 @@ column_names.append('rate')
 
 data_with_col_names = dict(zip(column_names, col_data))
 full_df = pd.DataFrame(data_with_col_names)
-# full_df_no_nan = pd.DataFrame(data_with_col_names_no_na)
+
 # column_names is header
 # col_data has all the information, one list per column
 full_df_no_na = full_df.copy()
 full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
-# full_df_no_na = full_df_no_na[~full_df_no_na.isin(['NaN']).any(axis=1)]
 
-print(full_df.head())
-print(full_df_no_na.head())
-
-full_df.to_excel("full_features_no_mig1.xlsx", na_rep="nan")
-full_df_no_na.to_excel("full_features_no_mig_NO_NAN1.xlsx", na_rep="nan")
-
-# figure out which columns have NaN values
-# cols_with_na = full_df.columns[full_df.isna().any()].tolist()
+full_df.to_excel("full_features_no_mig1.xlsx", na_rep="nan", index=False)
+full_df_no_na.to_excel("full_features_no_mig_NO_NAN1.xlsx", na_rep="nan", index=False)
 
 # -------------------------------------
 
