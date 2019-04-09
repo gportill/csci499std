@@ -1,6 +1,6 @@
 import read_data
 import pandas as pd
-
+import pickle
 # for a particular year
     # for each row of STD data: => county i (for each row, we will look at county i's neighbors in migration data)
         # store the county's neighbors in a list (available in adj_fips_dict)
@@ -108,31 +108,49 @@ cols_to_keep = {"Geo_FIPS": "fips",
 
 cols_to_keep_list = list(cols_to_keep.keys())
 
-rd = read_data.ReadData()
-print("reading read_std_data")
-std_dfs = rd.read_std_data()
-print("reading adj_fips_dict")
-adj_fips_dict = rd.read_county_neighbors()
-print("reading census_data")
-census_dfs = rd.read_census_data()
-print("before migration_dfs")
-migration_dfs = rd.read_migration_data()
-print("after migration_dfs")
-fips_to_county_dict = rd.get_fips_to_county_dict()
+#uncomment the first time you run it, comment it out for all the runs after
+# rd = read_data.ReadData()
+# print("reading read_std_data")
+# std_dfs = rd.read_std_data()
+# print("reading adj_fips_dict")
+# adj_fips_dict = rd.read_county_neighbors()
+# print("reading census_data")
+# census_dfs = rd.read_census_data()
+# print("before migration_dfs")
+# migration_dfs = rd.read_migration_data()
+# print("after migration_dfs")
+# fips_to_county_dict = rd.get_fips_to_county_dict()
+
+# pickle.dump( std_dfs, open( "save_std_dfs.p", "wb" ) )
+# pickle.dump( adj_fips_dict, open( "save_adj_fips_dict.p", "wb" ) )
+# pickle.dump( census_dfs, open( "save_census_dfs.p", "wb" ) )
+# pickle.dump( migration_dfs, open( "save_migration_dfs.p", "wb" ) )
+# pickle.dump( fips_to_county_dict, open( "save_fips_to_county_dict.p", "wb" ) )
+std_dfs = pickle.load( open( "save_std_dfs.p", "rb" ) )
+adj_fips_dict = pickle.load( open( "save_adj_fips_dict.p", "rb" ) )
+census_dfs = pickle.load( open( "save_census_dfs.p", "rb" ) )
+migration_dfs = pickle.load( open( "save_migration_dfs.p", "rb" ) )
+fips_to_county_dict = pickle.load( open( "save_fips_to_county_dict.p", "rb" ) )
 
 years = []
 for i in range(2006, 2017):
     years.append(str(i))
 
 # --------- below this line working on creating infected migration map inflow for all years
-print("before inflow")
 year_to_county_to_STD_inflows = {}
 
 #for each year
 for i in range(2006,2017):
     mig_df = migration_dfs[str(i)]
-    std_df = std_dfs[str(i)]
-    census_df = census_dfs[str(i)]
+    mig_df.drop_duplicates(subset=["destination", "origin"],  keep='first', inplace=True)
+    mig_df.set_index(["destination", "origin"], inplace=True) #makes it a multi index
+
+    std_df = std_dfs[str(i)].copy()
+    std_df.set_index("Geography",inplace=True)
+
+    census_df = census_dfs[str(i)].copy()
+    census_df.set_index("Geo_FIPS",inplace=True)
+
     census_total_pop_column = 'SE_A00001_001'
     dest_to_inflow = {}
     #for each county
@@ -142,45 +160,33 @@ for i in range(2006,2017):
         for origin in fips_to_county_dict[destination].neighbors:
             #calculate infected inflow from this neighbor
             #get cases of infection
-            case_rows = std_df[std_df["Geography"] == origin]["Cases"]
-            if len(case_rows) == 0:
-                cases = '0'
-            else:
-                cases = std_df[std_df["Geography"] == origin]["Cases"].item()
+            cases = '0'
+            #print(origin)
+            #print(std_df.index)
+            if origin in std_df.index:
+                cases = std_df.loc[origin]["Cases"]
             #get the population
-            pop_rows = census_df[census_df["Geo_FIPS"] == origin]
-            if len(pop_rows) == 0:
-                pop = '0'
-            else:
-                pop = census_df[census_df["Geo_FIPS"] == origin][census_total_pop_column].item()
+            pop = '0'
+            #pop_rows = census_df[census_df["Geo_FIPS"] == origin]
+            if origin in census_df.index:
+                pop = census_df.loc[origin][census_total_pop_column]
             #calculate ratio
             if float(pop.replace(",", "")) == 0:
                 infected_ratio = 0
             else:
                 infected_ratio = float(cases.replace(",", ""))/float(pop.replace(",", ""))
             # ratio * num migrating to dest = infected flow
-            num_exemp_rows = mig_df[(mig_df["destination"] == destination) & (mig_df["origin"] == origin)]["num_exemps"]
-            if len(num_exemp_rows) == 0:
-                num_exemps = 0;
-            elif len(num_exemp_rows) > 1:
-                print("num_exemp_rows greater than 1")
-                print(destination)
-                print(origin)
-                num_exemps = 0; #I haven't figured out how to get just the value in the first row, but if anyone else knows the syntax for it, pls update
-                #num_exemps = float(mig_df[(mig_df["destination"] == destination) & (mig_df["origin"] == origin)][0]["num_exemps"].item())
+            if (destination, origin) in mig_df.index:
+                num_exemps = float(mig_df.loc[destination, origin]["num_exemps"])
 
-            else:
-                num_exemps = float(mig_df[(mig_df["destination"] == destination) & (mig_df["origin"] == origin)]["num_exemps"].item())
             infected_flow = infected_ratio * num_exemps
+            #print(infected_flow)
             total_infected_inflow += infected_flow
+            #print(total_infected_inflow)
         #add total to dictionary
         dest_to_inflow[destination] = total_infected_inflow
     #add dictionary to dictionary
     year_to_county_to_STD_inflows[str(i)] = dest_to_inflow
-print("after inflow")
-
-# need this line?
-# census_df[census_df["Geo_FIPS"] == 1001]["SE_A00001_001"].item()
 
 # --------- Compiling everything into one data frame ---------
 col_data = [[] for i in range(96)]  # array of empty lists.
