@@ -243,6 +243,9 @@ full_df = pd.DataFrame(data_with_col_names)
 
 print(full_df.head())
 
+full_df["rate"] = full_df.replace(to_replace='Data not available', value='0', inplace=True)
+full_df["rate"] = full_df["rate"].str.replace(",","").astype(float)
+
 full_df_no_na = full_df.copy()
 full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
 
