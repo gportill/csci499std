@@ -242,3 +242,9 @@ full_df = pd.DataFrame(data_with_col_names)
 # col_data has all the information, one list per column
 
 print(full_df.head())
+
+full_df_no_na = full_df.copy()
+full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
+
+full_df.to_excel("full_features_mig_v.xlsx", na_rep="nan", index=False)
+full_df_no_na.to_excel("full_features_mig_no_nan_v.xlsx", na_rep="nan", index=False)
