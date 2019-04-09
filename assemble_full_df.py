@@ -145,7 +145,8 @@ for i in range(2006, 2017):
         for k in range(0, len(cols_to_keep_list)):
             curr_column = cols_to_keep_list[k]
             value = census_df[curr_column][idx]
-            col_data[k+1].append(value)  # fix ****** ask
+            col_data[k+1].append(value)
+            # print(cols_to_keep_list[k])
 
         # now columns 0 and 1-94 are filled
 
@@ -170,15 +171,14 @@ column_names.append('rate')
 
 data_with_col_names = dict(zip(column_names, col_data))
 full_df = pd.DataFrame(data_with_col_names)
+
 # column_names is header
 # col_data has all the information, one list per column
+full_df_no_na = full_df.copy()
+full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
 
-print(full_df.head())
-
-# print(full_df.loc[:, "fips"])
-# print(full_df.loc[:, "age_15_to_17"])  # printing column values just to check
-
-full_df.to_excel("full_features_no_mig.xlsx", na_rep="nan")
+full_df.to_excel("full_features_no_mig1.xlsx", na_rep="nan", index=False)
+full_df_no_na.to_excel("full_features_no_mig_NO_NAN1.xlsx", na_rep="nan", index=False)
 
 # -------------------------------------
 

@@ -17,7 +17,10 @@ class County:
         # print(self.neighbors)
 
     def addCases(self, year, cases):
-        self.year_to_cases_dict[year] = cases
+        # print(cases)
+        if cases == 'Data not available':
+            cases = "0"
+        self.year_to_cases_dict[year] = int(cases.replace(",", ""))
         # print(self.year_to_cases_dict)
 
     def addPop(self, year, pop):
