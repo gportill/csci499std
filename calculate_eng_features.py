@@ -199,12 +199,15 @@ col_data = [[] for i in range(98)]  # array of empty lists.
 # index 96 is total cases in county
 # index 97 is raw number of cases (not normalized)
 
+counter = 0
 for i in range(2006, 2017):
+    print("start for " + str(i) + ": " + str(counter))
     year = str(i)
     census_df = census_dfs[year]
 
     # loop over rows in this year's census data
     for idx, val in census_df.iterrows():
+        counter += 1
         fips = census_df["Geo_FIPS"][idx]
         if fips in fips_to_county_dict.keys():  # skip any counties whose FIPS are not in fips_to_county_dict
             county = fips_to_county_dict[fips]  # county is a county object
@@ -240,6 +243,8 @@ for i in range(2006, 2017):
         # add infected_inflow data
         inflow_df = year_to_county_to_STD_inflows[year]
         col_data[95].append(inflow_df[county.fips])
+
+    # print("end for " + str(i) + ": " + str(counter))
 
 census_col_names = census_dfs["2006"].columns
 descriptive_census_col_names = []
@@ -291,3 +296,39 @@ full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
 # If you want all the data (with columns that contain NaN values), save full_df to an excel
 # full_df.to_excel("full_features_mig_v.xlsx", na_rep="nan", index=False)
 full_df_no_na.to_excel("full_features_mig_no_nan_v.xlsx", na_rep="nan", index=False)
+
+year_dfs = {}
+year_dfs[2006] = (full_df_no_na[:782])
+year_dfs[2007] = (full_df_no_na[782:1569])
+year_dfs[2008] = (full_df_no_na[1569:2358])
+year_dfs[2009] = (full_df_no_na[2358:3149])
+year_dfs[2010] = (full_df_no_na[3149:3955])
+year_dfs[2011] = (full_df_no_na[3955:4765])
+year_dfs[2012] = (full_df_no_na[4765:5578])
+year_dfs[2013] = (full_df_no_na[5578:6394])
+year_dfs[2014] = (full_df_no_na[6394:7210])
+year_dfs[2015] = (full_df_no_na[7210:8028])
+year_dfs[2016] = (full_df_no_na[8028:])
+
+# for i in range(2006,2017):
+#     print(str(year_dfs[i].count))
+
+'''
+start for 2006: 0
+start for 2007: 795
+start for 2008: 1595
+start for 2009: 2397
+start for 2010: 3202
+start for 2011: 4020
+start for 2012: 4842
+start for 2013: 5667
+start for 2014: 6495
+start for 2015: 7323
+start for 2016: 8153
+'''
+
+writer = pd.ExcelWriter('full_features_by_year.xlsx', engine='xlsxwriter')
+for i in range(2006, 2017):
+    year = str(i)
+    year_dfs[i].to_excel(writer, sheet_name=year)
+writer.save()
