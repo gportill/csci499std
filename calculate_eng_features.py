@@ -1,6 +1,8 @@
 import read_data
 import pandas as pd
 import pickle
+from sklearn import preprocessing
+
 # for a particular year
     # for each row of STD data: => county i (for each row, we will look at county i's neighbors in migration data)
         # store the county's neighbors in a list (available in adj_fips_dict)
@@ -189,11 +191,13 @@ for i in range(2006,2017):
     year_to_county_to_STD_inflows[str(i)] = dest_to_inflow
 
 # --------- Compiling everything into one data frame ---------
-col_data = [[] for i in range(96)]  # array of empty lists.
+col_data = [[] for i in range(98)]  # array of empty lists.
 # index 0 is year
 # indices 1 to 93 are census data
-# index 94 is std cases
+# index 94 is std cases PER PERSON
 # index 95 is infected_inflow
+# index 96 is total cases in county
+# index 97 is raw number of cases (not normalized)
 
 for i in range(2006, 2017):
     year = str(i)
@@ -209,17 +213,29 @@ for i in range(2006, 2017):
 
         col_data[0].append(i)  # set year for this row
 
+        total_pop_val = 0
+
         # adding census data for all the census columns we want to keep
         for k in range(0, len(cols_to_keep_list)):
             curr_column = cols_to_keep_list[k]
             value = census_df[curr_column][idx]
-            col_data[k+1].append(value)  # fix ****** ask
+            if cols_to_keep[curr_column] == "total_pop":
+                total_pop_val = value
+            col_data[k+1].append(value)
 
         # now columns 0 and 1-93 are filled
 
-        # add cases info
-        cases = county.year_to_cases_dict[year]
-        col_data[94].append(cases)
+        # add cases info: num_cases / total_pop
+        if county.year_to_cases_dict[year] == 'Data not available':
+            cases = 0
+            cases_per_person = 0
+        else:
+            cases = float(county.year_to_cases_dict[year].replace(',', ''))
+            cases_per_person = float(county.year_to_cases_dict[year].replace(',', '')) / float(total_pop_val)
+        # print(cases)
+        col_data[94].append(cases_per_person)
+        col_data[96].append(cases)
+        col_data[97].append(cases)
 
         # add infected_inflow data
         inflow_df = year_to_county_to_STD_inflows[year]
@@ -233,8 +249,10 @@ for i in range(0, len(census_col_names)):
 column_names = ['year']
 for i in range(0, len(descriptive_census_col_names)):
     column_names.append(descriptive_census_col_names[i])
-column_names.append('rate')
+column_names.append('cases_per_person')
 column_names.append('infected_inflow')
+column_names.append('cases')
+column_names.append('cases_raw')
 
 data_with_col_names = dict(zip(column_names, col_data))
 full_df = pd.DataFrame(data_with_col_names)
@@ -242,12 +260,34 @@ full_df = pd.DataFrame(data_with_col_names)
 # col_data has all the information, one list per column
 
 print(full_df.head())
+# --------------------------------------------------------------------
 
-full_df["rate"] = full_df.replace(to_replace='Data not available', value='0', inplace=True)
-full_df["rate"] = full_df["rate"].str.replace(",","").astype(float)
+# --------- normalize all the columns except cases_per_person --------
+col_names_to_normalize = list(full_df.columns.values)
+col_names_to_normalize.remove('fips')
+col_names_to_normalize.remove('year')
+col_names_to_normalize.remove('cases_per_person')
+col_names_to_normalize.remove('cases_raw')
+
+#for col in final_col_names:
+#     x = full_df[[col]].values.astype(float)
+#     min_max_scaler = preprocessing.MinMaxScaler()
+#     x_scaled = min_max_scaler.fit_transform(x)
+#     df_normalized =
+
+min_max_scaler = preprocessing.MinMaxScaler()
+x = full_df[col_names_to_normalize].values
+x_scaled = min_max_scaler.fit_transform(x)
+df_temp = pd.DataFrame(x_scaled, columns=col_names_to_normalize, index=full_df.index)
+full_df[col_names_to_normalize] = df_temp
+print(full_df.head())
+# --------------------------------------------------------------------
+
+full_df.columns[full_df.isna().any()].tolist()
 
 full_df_no_na = full_df.copy()
 full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
 
-full_df.to_excel("full_features_mig_v.xlsx", na_rep="nan", index=False)
+# If you want all the data (with columns that contain NaN values), save full_df to an excel
+# full_df.to_excel("full_features_mig_v.xlsx", na_rep="nan", index=False)
 full_df_no_na.to_excel("full_features_mig_no_nan_v.xlsx", na_rep="nan", index=False)
