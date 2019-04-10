@@ -42,7 +42,6 @@ def create_model(year):
 
         # match all rows of years after t0 match the county rows for t0
         # discard rows that there is no data for at t0
-        print(df.head())
         if i > t0:
             df = df[df['fips'].isin(dfs[t0]['fips'])]
 
@@ -71,11 +70,9 @@ def create_model(year):
         df.columns = updated_col_names
         j += 1
         dfs[i] = df
-        print(df.head())
 
     # now remove fips_t0 for dfs[t0]
     dfs[t0] = dfs[t0].drop('fips', axis=1)
-    print(dfs[year_to_predict].head())
 
     # concatenate all dfs but the year to predict
     full_df = dfs[t0].copy()
@@ -86,13 +83,11 @@ def create_model(year):
 
     full_df['target_t5'] = dfs[year_to_predict].cases_t5  # put the variable you want to predict here
     # now that variable (for y) is called target_t5 in the full_df
-    print(full_df.head())
-    # full_df = full_df.reset_index()
-    print("before: ")
-    print(full_df.shape)
+    # print("before: ")
+    # print(full_df.shape)
     full_df = full_df.dropna()
-    print("after: ")
-    print(full_df.shape)
+    # print("after: ")
+    # print(full_df.shape)
 
     x = full_df.drop('target_t5', axis=1)
     y = full_df.target_t5
@@ -102,13 +97,24 @@ def create_model(year):
     lm = LinearRegression()
     lm.fit(x_train, y_train)
     pred_train = lm.predict(x_train)
-    print("pred_train: " + str(list(pred_train)))
+    # print("pred_train: " + str(list(pred_train)))
     pred_test = lm.predict(x_test)
-    print("pred_test: " + str(list(pred_test)))
-    print("y_test: " + str(list(y_test)))
+    # print("pred_test: " + str(list(pred_test)))
+    # print("y_test: " + str(list(y_test)))
 
     r2 = sklearn.metrics.r2_score(y_test, pred_test)
     print("r2: " + str(r2))
 
+    plt.scatter(y_test, pred_test)
+    plt.xlabel("Actual cases")
+    plt.ylabel("Predicted cases")
+    plt.title("Actual cases vs. predicted cases in y_test")
+    plt.show()
 
-create_model(2006)
+
+# create_model(2006)  # r2 = -0.62
+# create_model(2007)  # r2 = -0.17
+# create_model(2008)  # r2 = 0.125
+create_model(2009)  # r2 = 0.97
+# create_model(2010)  # r2 = -0.025
+# create_model(2011)  # r2 = 0.02
