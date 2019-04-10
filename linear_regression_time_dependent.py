@@ -79,10 +79,33 @@ def create_model(year):
     for i in range(t0+1, year_to_predict):
         full_df = full_df.join(dfs[i])
 
-    # -------- begin linear regression --------
+    # -------- add engineered features -------
 
+    full_df['cases_t0'] = full_df['cases_t0'].astype(float)
+    full_df['cases_t1'] = full_df['cases_t1'].astype(float)
+    full_df['cases_t2'] = full_df['cases_t2'].astype(float)
+    full_df['cases_t3'] = full_df['cases_t3'].astype(float)
+    full_df['cases_t4'] = full_df['cases_t4'].astype(float)
+
+    # diff_cases_t0_t4
+    full_df['diff_cases_t0_t4'] = full_df['cases_t4'] - full_df['cases_t0']
+    # diff_cases_t0_t1
+    full_df['diff_cases_t0_t1'] = full_df['cases_t1'] - full_df['cases_t0']
+    # diff_cases_t1_t2
+    full_df['diff_cases_t1_t2'] = full_df['cases_t2'] - full_df['cases_t1']
+    # diff_cases_t2_t3
+    full_df['diff_cases_t2_t3'] = full_df['cases_t3'] - full_df['cases_t2']
+    # diff_cases_t3_t4
+    full_df['diff_cases_t3_t4'] = full_df['cases_t4'] - full_df['cases_t3']
+    # print(full_df.head())
+    # -------- end engineered features --------
+
+    # -------- begin linear regression --------
     full_df['target_t5'] = dfs[year_to_predict].cases_t5  # put the variable you want to predict here
     # now that variable (for y) is called target_t5 in the full_df
+
+    full_df.to_excel("time_dep_data.xlsx", na_rep="nan", index=False)
+
     # print("before: ")
     # print(full_df.shape)
     full_df = full_df.dropna()
@@ -102,6 +125,9 @@ def create_model(year):
     # print("pred_test: " + str(list(pred_test)))
     # print("y_test: " + str(list(y_test)))
 
+    coefs_df = pd.DataFrame(zip(x.columns, lm.coef_), columns=['features', 'estimated coefficients'])
+    print(coefs_df)
+
     r2 = sklearn.metrics.r2_score(y_test, pred_test)
     print("r2: " + str(r2))
 
@@ -112,9 +138,9 @@ def create_model(year):
     plt.show()
 
 
-# create_model(2006)  # r2 = -0.62
-# create_model(2007)  # r2 = -0.17
-# create_model(2008)  # r2 = 0.125
-create_model(2009)  # r2 = 0.97
-# create_model(2010)  # r2 = -0.025
-# create_model(2011)  # r2 = 0.02
+# create_model(2006)  # r2 = -0.62 without engineered features
+# create_model(2007)  # r2 = -0.17 without engineered features
+# create_model(2008)  # r2 = 0.125 without engineered features
+create_model(2009)  # without engineered features, r2 = 0.97. with engineered features, 0.973
+# create_model(2010)  # r2 = -0.025 without engineered features
+# create_model(2011)  # r2 = 0.02 without engineered features
