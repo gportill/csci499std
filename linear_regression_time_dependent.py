@@ -53,13 +53,42 @@ def create_model(year):
 
     # now remove fips_t0 for dfs[t0]
     dfs[t0] = dfs[t0].drop('fips', axis=1)
+    print(dfs[year_to_predict].head())
 
     # concatenate all dfs but the year to predict
     full_df = dfs[t0].copy()
     for i in range(t0+1, year_to_predict):
         full_df = full_df.join(dfs[i])
 
+    # print(full_df.head())
+
+    # -------- begin linear regression --------
+
+    full_df['target_t5'] = dfs[year_to_predict].cases_t5  # put the variable you want to predict here
+    # now that variable (for y) is called target_t5 in the full_df
     print(full_df.head())
+    full_df = full_df.reset_index()
+    print("before: ")
+    print(full_df.shape)
+    full_df = full_df.dropna()
+    print("after: ")
+    print(full_df.shape)
+
+    x = full_df.drop('target_t5', axis=1)
+    y = full_df.target_t5
+
+    x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x, y, test_size=0.2,
+                                                                                random_state=5)
+    lm = LinearRegression()
+    lm.fit(x_train, y_train)
+    pred_train = lm.predict(x_train)
+    print("pred_train: " + str(list(pred_train)))
+    pred_test = lm.predict(x_test)
+    print("pred_test: " + str(list(pred_test)))
+    print("y_test: " + str(list(y_test)))
+
+    r2 = sklearn.metrics.r2_score(y_test, pred_test)
+    print("r2: " + str(r2))
 
 
 create_model(2006)
