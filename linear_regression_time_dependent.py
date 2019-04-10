@@ -18,23 +18,44 @@ def create_model(year):
     t0 = year  # first year of data
     j = 0
 
+    cols_to_keep_t0 = ['fips', 'total_pop', 'pop_density', 'male', 'female',
+                       'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
+                       'never_married', 'poverty_status_under18_living_in_poverty',
+                       'poverty_status_18_to_64_living_in_poverty',
+                       'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases']
+    # 'cases_raw', 'cases_per_person'
+    # cols_to_keep = cols_to_keep_t0.copy()
+    # cols_to_keep = cols_to_keep.remove('fips')
+    cols_to_keep = ['total_pop', 'pop_density', 'male', 'female',
+                       'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
+                       'never_married', 'poverty_status_under18_living_in_poverty',
+                       'poverty_status_18_to_64_living_in_poverty',
+                       'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases']
+
     print("t0: " + str(t0))
     print("year_to_predict: " + str(year_to_predict))
 
     for i in range(year, year+num_training_years+1):
         df = pd.read_excel('./full_features_by_year.xlsx', sheet_name=str(i), dtype=str)
         df = df.drop("Unnamed: 0", axis=1)
+        # print(list(df.columns.values))
 
         # match all rows of years after t0 match the county rows for t0
         # discard rows that there is no data for at t0
+        print(df.head())
         if i > t0:
             df = df[df['fips'].isin(dfs[t0]['fips'])]
 
+        if i == t0:
+            df = df[cols_to_keep_t0]
+        else:
+            df = df[cols_to_keep]
+
         # remove year and fips columns for ALL data frames
-        if not i == t0:
-            df = df.drop('fips', axis=1) # except don't remove fips_t0 for now because we need it
-        df = df.drop('year', axis=1)
-        df = df.drop(['cases_raw', 'cases_per_person'], axis=1)  # TODO remove any variables you want to here
+        # if not i == t0:
+        #     df = df.drop('fips', axis=1) # except don't remove fips_t0 for now because we need it
+        # df = df.drop('year', axis=1)
+        # df = df.drop(['cases_raw', 'cases_per_person'], axis=1)  # TODO remove any variables you want to here
 
         # update column names for all dfs
         updated_col_names = []
@@ -50,6 +71,7 @@ def create_model(year):
         df.columns = updated_col_names
         j += 1
         dfs[i] = df
+        print(df.head())
 
     # now remove fips_t0 for dfs[t0]
     dfs[t0] = dfs[t0].drop('fips', axis=1)
@@ -60,14 +82,12 @@ def create_model(year):
     for i in range(t0+1, year_to_predict):
         full_df = full_df.join(dfs[i])
 
-    # print(full_df.head())
-
     # -------- begin linear regression --------
 
     full_df['target_t5'] = dfs[year_to_predict].cases_t5  # put the variable you want to predict here
     # now that variable (for y) is called target_t5 in the full_df
     print(full_df.head())
-    full_df = full_df.reset_index()
+    # full_df = full_df.reset_index()
     print("before: ")
     print(full_df.shape)
     full_df = full_df.dropna()
