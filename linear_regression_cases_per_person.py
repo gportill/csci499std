@@ -9,6 +9,8 @@ import sklearn.metrics
 df = pd.read_excel('./full_features_mig_no_nan_v.xlsx')
 df = df.drop('year', axis=1)
 df = df.drop('fips', axis=1)
+df = df.drop('cases', axis=1)
+df = df.drop('cases_raw', axis=1)
 x = df.drop('cases_per_person', axis=1)
 # lm = LinearRegression()
 
