@@ -6,15 +6,19 @@ import sklearn.model_selection as model_selection
 import sklearn.feature_selection
 from sklearn.linear_model import LinearRegression
 
-df = pd.read_excel('./full_features_no_mig_NO_NAN1.xlsx')
-x = df.drop('rate', axis=1)
+df = pd.read_excel('./full_features_mig_no_nan_v.xlsx')
+x = df.drop('cases_per_person', axis=1)
+x = x.drop('cases_raw', axis=1)
+x = x.drop('cases', axis=1)
 x = x.drop('year', axis=1)
-y = df['rate']
+x = x.drop('fips', axis=1)
+#x = x.drop('avg_household_size', axis=1)
+y = df['cases_per_person']
 lm = LinearRegression()
 
 # fit_intercept and normalize => parameters to the linear regression object
 
-lm.fit(x, df.rate)
+lm.fit(x, df.cases_per_person)
 print("Estimated intercept coefficient: " + str(lm.intercept_))
 print("Number of coefficients: " + str(len(lm.coef_)))
 coefs_df = pd.DataFrame(zip(x.columns, lm.coef_), columns=['features', 'estimated coefficients'])
@@ -30,24 +34,26 @@ predictions = lm.predict(x)
 # plt.title("Actual cases vs. predicted cases")
 # plt.show()
 
-print(df.rate)
+print(df.cases_per_person)
 print(predictions)
 
-mseFull = np.mean((df.rate - lm.predict(x))**2)
+mseFull = np.mean((df.cases_per_person - lm.predict(x))**2)
 print(mseFull)
 
 # how to use validation set?
 
-x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x, df.rate, test_size=0.2, random_state=5)
+x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x, df.cases_per_person, test_size=0.2, random_state=5)
 
 lm = LinearRegression()
 
 num_folds = 3
 cv_models = model_selection.cross_validate(LinearRegression(), x, y, cv=num_folds, return_estimator=True)
-cross_val_predict_data = model_selection.cross_val_predict(sklearn.linear_model.Ridge(), x, y, cv=num_folds)
+cross_val_predict_data = model_selection.cross_val_predict(LinearRegression(), x, y, cv=num_folds)
 
 plt.figure(figsize=(10,8))
 plt.scatter(y, cross_val_predict_data)
+plt.xlim(-0.010, 0.020)
+plt.ylim(-0.010, 0.020)
 plt.ylabel("prediction", fontsize=22)
 plt.xlabel("true Y", fontsize=22)
 plt.title("Linear Regression")
