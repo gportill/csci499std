@@ -20,7 +20,8 @@ def build_df(year):
                        'never_married', 'poverty_status_under18_living_in_poverty',
                        'poverty_status_18_to_64_living_in_poverty',
                        'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases_per_person']
-    # 'cases', 'cases_raw'
+    # 'cases' => cases_normalized, 'cases_raw'
+    # you can select other census variables here, too
 
     cols_to_keep = ['total_pop', 'pop_density', 'male', 'female',
                        'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
