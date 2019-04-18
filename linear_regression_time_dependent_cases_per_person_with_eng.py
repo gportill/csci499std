@@ -18,14 +18,14 @@ def create_model(year):
     t0 = year  # first year of data
     j = 0
 
-    cols_to_keep_t0 = ['fips', 'total_pop', 'pop_density', 'male', 'female',
-                       'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
-                       'never_married', 'poverty_status_under18_living_in_poverty',
-                       'poverty_status_18_to_64_living_in_poverty',
-                       'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases_per_person']
+    # cols_to_keep_t0 = ['fips', 'total_pop', 'pop_density', 'male', 'female',
+    #                    'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
+    #                    'never_married', 'poverty_status_under18_living_in_poverty',
+    #                    'poverty_status_18_to_64_living_in_poverty',
+    #                    'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases_per_person']
     # 'cases', 'cases_raw'
 
-    cols_to_keep = ['total_pop', 'pop_density', 'male', 'female',
+    cols_to_keep = ['fips', 'total_pop', 'pop_density', 'male', 'female',
                        'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
                        'never_married', 'poverty_status_under18_living_in_poverty',
                        'poverty_status_18_to_64_living_in_poverty',
@@ -36,17 +36,21 @@ def create_model(year):
 
     for i in range(year, year+num_training_years+1):
         df = pd.read_excel('./full_features_by_year.xlsx', sheet_name=str(i), dtype=str)
-        df = df.drop("Unnamed: 0", axis=1)
+        #df = df.drop("Unnamed: 0", axis=1)
 
         # match all rows of years after t0 match the county rows for t0
         # discard rows that there is no data for at t0
-        if i > t0:
-            df = df[df['fips'].isin(dfs[t0]['fips'])]
+        df = df[cols_to_keep]
 
-        if i == t0:
-            df = df[cols_to_keep_t0]
-        else:
-            df = df[cols_to_keep]
+        df = df.set_index("fips")
+
+        # if i > t0:
+        #     df = df[df['fips'].isin(dfs[t0]['fips'])]
+        #
+        # if i == t0:
+        #     df = df[cols_to_keep_t0]
+        # else:
+        #     df = df[cols_to_keep]
 
         # update column names for all dfs
         updated_col_names = []
@@ -64,7 +68,7 @@ def create_model(year):
         dfs[i] = df
 
     # now remove fips_t0 for dfs[t0]
-    dfs[t0] = dfs[t0].drop('fips', axis=1)
+    # dfs[t0] = dfs[t0].drop('fips', axis=1)
 
     # concatenate all dfs but the year to predict
     full_df = dfs[t0].copy()
@@ -123,9 +127,9 @@ def create_model(year):
     plt.show()
 
 
-# create_model(2006)
-# create_model(2007)
-# create_model(2008)
+create_model(2006)
+create_model(2007)
+create_model(2008)
 create_model(2009)
-# create_model(2010)
-# create_model(2011)
+create_model(2010)
+create_model(2011)

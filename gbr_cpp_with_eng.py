@@ -6,7 +6,6 @@ import sklearn.model_selection
 from sklearn.ensemble import GradientBoostingRegressor
 import sklearn.metrics
 
-
 def create_model(year):
     if year < 2006 or year > 2011:
         print("year must be [2006, 2011]")
@@ -18,35 +17,42 @@ def create_model(year):
     t0 = year  # first year of data
     j = 0
 
-    cols_to_keep_t0 = ['fips', 'total_pop', 'pop_density', 'male', 'female',
-                       'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
-                       'never_married', 'poverty_status_under18_living_in_poverty',
-                       'poverty_status_18_to_64_living_in_poverty',
-                       'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases_per_person']
+    # cols_to_keep_t0 = ['fips', 'total_pop', 'pop_density', 'male', 'female',
+    #                    'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
+    #                    'never_married', 'cases_per_person']
+
+                       # 'poverty_status_under18_living_in_poverty',
+                       # 'poverty_status_18_to_64_living_in_poverty',
+                       # 'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases_per_person']
     # 'cases', 'cases_raw'
 
-    cols_to_keep = ['total_pop', 'pop_density', 'male', 'female',
+    cols_to_keep = ['fips', 'total_pop', 'pop_density', 'male', 'female',
                        'age_15_to_17', 'age_18_to_24', 'age_25_to_34', 'pop_15_and_older',
                        'never_married', 'poverty_status_under18_living_in_poverty',
-                       'poverty_status_18_to_64_living_in_poverty',
-                       'poverty_status_65older_living_in_poverty', 'infected_inflow', 'cases_per_person']
+                        'poverty_status_18_to_64_living_in_poverty', 'poverty_status_65older_living_in_poverty',
+                        'infected_inflow', 'cases_per_person']
 
     print("t0: " + str(t0))
     print("year_to_predict: " + str(year_to_predict))
 
     for i in range(year, year+num_training_years+1):
         df = pd.read_excel('./full_features_by_year.xlsx', sheet_name=str(i), dtype=str)
-        df = df.drop("Unnamed: 0", axis=1)
+        # df = df.drop("Unnamed: 0", axis=1)
 
         # match all rows of years after t0 match the county rows for t0
         # discard rows that there is no data for at t0
-        if i > t0:
-            df = df[df['fips'].isin(dfs[t0]['fips'])]
+        df = df[cols_to_keep]
 
-        if i == t0:
-            df = df[cols_to_keep_t0]
-        else:
-            df = df[cols_to_keep]
+        # set the index of the dataframe to be the fips code
+        df = df.set_index("fips")
+
+        # if i > t0:
+        #     df = df[df['fips'].isin(dfs[t0]['fips'])]
+
+        # if i == t0:
+        #     df = df[cols_to_keep_t0]
+        # else:
+        #     df = df[cols_to_keep]
 
         # update column names for all dfs
         updated_col_names = []
@@ -63,13 +69,14 @@ def create_model(year):
         j += 1
         dfs[i] = df
 
-    # now remove fips_t0 for dfs[t0]
-    dfs[t0] = dfs[t0].drop('fips', axis=1)
+    # # now remove fips_t0 for dfs[t0]
+    # no more fips to remove
+    # dfs[t0] = dfs[t0].drop('fips', axis=1)
 
     # concatenate all dfs but the year to predict
     full_df = dfs[t0].copy()
     for i in range(t0+1, year_to_predict):
-        full_df = full_df.join(dfs[i])
+        full_df = full_df.join(dfs[i], how="left")
 
     # -------- add engineered features -------
 
@@ -100,6 +107,9 @@ def create_model(year):
     # -------- begin linear regression --------
     full_df = full_df.dropna() # //// end copy after this line
     full_df = full_df.astype(float)
+
+    # write data to csv
+    # full_df.to_csv("full_df_{}.csv".format(year))
 
     x = full_df.drop('target_t5', axis=1)
     y = full_df.target_t5
