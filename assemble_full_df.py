@@ -1,4 +1,5 @@
 import read_data
+import std_clinics
 import pandas as pd
 
 # for a particular year
@@ -116,8 +117,9 @@ adj_fips_dict = rd.read_county_neighbors()
 print("reading census_data")
 census_dfs = rd.read_census_data()
 
-
-
+clinics = std_clinics.STDClinics()
+print("reading clinic dict")
+clinics_in_county = clinics.get_num_per_fips()
 
 # -------------------------------------
 fips_to_county_dict = rd.get_fips_to_county_dict()
@@ -171,6 +173,16 @@ column_names.append('rate')
 
 data_with_col_names = dict(zip(column_names, col_data))
 full_df = pd.DataFrame(data_with_col_names)
+
+#add num of std clinics
+# full_df['num std clinics'] = []
+# for fips in full_df:
+#     if fips in clinics_in_county:
+#         full_df['num std clinics'] = clinics_in_county[fips]
+#     else:
+#         full_df['num std clinics'] = "NA"
+#
+# print(full_df)
 
 # column_names is header
 # col_data has all the information, one list per column
