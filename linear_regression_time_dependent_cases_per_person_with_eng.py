@@ -103,6 +103,7 @@ def create_model(year):
 
     # -------- begin linear regression --------
     full_df = full_df.dropna()
+    full_df = full_df.astype(float)
 
     x = full_df.drop('target_t5', axis=1)
     y = full_df.target_t5
