@@ -29,6 +29,7 @@ def get_county_adjacency():
     rd = read_data.ReadData()
     rd.read_std_data()  # must be done before reading neighbors
     adjacency_dict = rd.read_county_neighbors()
+    return adjacency_dict
     # look up in dictionary (by string FIPS) name of county you want info for.
 
 def make_df(year):
@@ -123,7 +124,7 @@ def make_df(year):
 
     file = "./new_jersey/new_jersey_" + str(year) + "_cpp.xlsx"
 
-    full_df.to_excel(file, na_rep="nan", index=False)
+    full_df.to_excel(file, na_rep="nan")
 
 
 for i in range(2006, 2012):
