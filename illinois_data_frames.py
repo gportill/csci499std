@@ -114,6 +114,7 @@ def get_county_adjacency():
     rd = read_data.ReadData()
     rd.read_std_data()  # must be done before reading neighbors
     adjacency_dict = rd.read_county_neighbors()
+    return adjacency_dict
     # look up in dictionary (by string FIPS) name of county you want info for.
 
 def make_df(year):
@@ -321,7 +322,6 @@ def make_df(year):
     # now that variable (for y) is called target_t5 in the full_df
 
     # full_df.to_excel("time_dep_data.xlsx", na_rep="nan", index=False)
-
     # -------- begin linear regression --------
     full_df = full_df.dropna()  # //// end copy after this line
     full_df = full_df.astype(float)
@@ -330,7 +330,7 @@ def make_df(year):
 
     file = "./illinois_data/illinois_" + str(year) + "_cpp.xlsx"
 
-    full_df.to_excel(file, na_rep="nan", index=False)
+    full_df.to_excel(file, na_rep="nan")
 
 
 for i in range(2006, 2012):
