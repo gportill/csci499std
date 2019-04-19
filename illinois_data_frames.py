@@ -1,6 +1,34 @@
 import pandas as pd
 import read_data
 
+# std clinics for each county that is available in census data
+std_clinics_per_county = {'17001': 1,
+                          '17019': 0,
+                          '17031': 1,
+                          '17037': 2,
+                          '17043': 2,
+                          '17089': 2,
+                          '17091': 1,
+                          '17093': 0,
+                          '17097': 0,
+                          '17099': 0,
+                          '17111': 1,
+                          '17113': 1,
+                          '17115': 1,
+                          '17119': 1,
+                          '17143': 1,
+                          '17161': 1,
+                          '17163': 2,
+                          '17167': 1,
+                          '17179': 0,
+                          '17183': 0,
+                          '17197': 1,
+                          '17201': 1}
+
+counties_available = ['17001', '17019', '17031', '17037', '17043', '17089', '17091', '17093',
+       '17097', '17099', '17111', '17113', '17115', '17119', '17143', '17161',
+       '17163', '17167', '17179', '17183', '17197', '17201']
+
 counties_unavailable = ['17003',
                 '17005',
                 '17007',
@@ -231,9 +259,10 @@ def make_df(year):
 
         # set the index of the dataframe to be the fips code
         df = df.set_index("fips")
-        print(df.shape)
+        # print(df.shape)
         df = df.filter(items=il_fips, axis='index')
-        print(df.shape)
+        print(df.index)
+        # print(df.shape)
 
         # if i > t0:
         #     df = df[df['fips'].isin(dfs[t0]['fips'])]
