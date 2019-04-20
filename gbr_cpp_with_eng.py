@@ -116,7 +116,7 @@ def create_model(year):
 
     x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x, y, test_size=0.2,
                                                                                 random_state=5)
-    lm = GradientBoostingRegressor(max_depth=1)  # works not horribly with max_depth=1 with 2008
+    lm = GradientBoostingRegressor(max_depth=2)  # works not horribly with max_depth=1 with 2008
     lm.fit(x_train, y_train)
     pred_train = lm.predict(x_train)
     print("training r^2:", sklearn.metrics.r2_score(y_train, pred_train))
@@ -131,7 +131,7 @@ def create_model(year):
     plt.scatter(y_test, pred_test)
     plt.xlabel("Actual cases")
     plt.ylabel("Predicted cases")
-    plt.title("Actual cases vs. predicted cases in y_test")
+    plt.title("Actual cases per person vs. predicted cases per person for t0=" + str(year))
     plt.show()
 
 

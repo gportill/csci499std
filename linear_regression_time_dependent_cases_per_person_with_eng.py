@@ -124,7 +124,7 @@ def create_model(year):
     plt.scatter(y_test, pred_test)
     plt.xlabel("Actual cases")
     plt.ylabel("Predicted cases")
-    plt.title("Actual cases vs. predicted cases in y_test")
+    plt.title("Actual cases per person vs. predicted cases per person in t0=" + str(year))
     plt.show()
 
 
