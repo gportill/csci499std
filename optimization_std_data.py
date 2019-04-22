@@ -9,9 +9,23 @@ class County:
         self.year_to_pop_dict = {}  # {"year" : pop_for_year}
         self.year_to_mig_dict = {}  # {"year" : {dest_county:num_exemps, dest_count:num+exemps} }
         self.sum_cases_5_yr = 0
+        self.sum_cpp_5_yr = 0
 
     def getFips(self):
         return self.fips
+
+    def addPopToYear(self, year, pop):
+        print("-------Adding pop", pop, "to year", year, "for fips", self.fips)
+        self.year_to_pop_dict[year] = pop
+
+    def getCpp(self):
+        return self.sum_cpp_5_yr
+
+    def getYearToCasesDict(self):
+        return self.year_to_cases_dict
+
+    def getYearToPopDict(self):
+        return self.year_to_pop_dict
 
     def getSummedCases(self):
         return self.sum_cases_5_yr
@@ -30,7 +44,7 @@ class County:
     def sumCases(self, cases):
         cases = cases.replace(",","")
         if cases == 'Data not available':
-            print("SKIP", self.fips)
+            # print("SKIP", self.fips)
             cases = "0"
         self.sum_cases_5_yr += int(cases)
 
@@ -50,8 +64,6 @@ class County:
 class ReadData:
     def __init__(self):
         self.county_to_fips_dict = {}
-        # self.census_pop_total_dict = {}  # TODO maps YEAR to dictionary item of county:total_pop
-        # self.mig_dest_ori_num_dict = {} # TODO maps destination county FIPS to dictionary item of origin:num_people_who_moved_to_destination
         self.fips_to_county_dict = {}
 
         self.il_fips = ['17001', '17003', '17005', '17007', '17009', '17011', '17013', '17015', '17017',
@@ -72,6 +84,52 @@ class ReadData:
                    '34019', '34021', '34023', '34025', '34027', '34029', '34031', '34033', '34035',
                    '34037', '34039', '34041']
 
+    def read_census_data(self):
+        census_files = ["./census_data/2012_census_with_total_pop.csv", "./census_data/2013_census_with_total_pop.csv",
+                        "./census_data/2014_census_with_total_pop.csv", "./census_data/2015_census_with_total_pop.csv",
+                        "./census_data/2016_census_with_total_pop.csv"]
+
+        census_dfs = {}
+
+        year = 2011
+
+        for file in census_files:
+            year += 1
+            key = str(year)
+            census_dfs[key] = pd.read_csv(file, encoding='latin-1', index_col=False, dtype=str)
+
+        cols_to_keep = {"Geo_FIPS": "fips",
+                "SE_A00001_001": "total_pop"}
+
+        vars_to_code = {v: k for k, v in cols_to_keep.items()}
+
+        col_keys = list(cols_to_keep.keys())
+
+        census_dfs_cond = {}  # all the census data we need (no health insurance)
+        for year in range(2012, 2017):
+            year_str = str(year)
+            curr_df = census_dfs[year_str]
+            new_df = curr_df[col_keys]
+            census_dfs_cond[year_str] = new_df
+
+        for i in range(2012, 2017):
+            df = census_dfs_cond[str(i)]
+            for idx, val in df.iterrows():
+                fips = df["Geo_FIPS"][idx]
+                pop = df["SE_A00001_001"][idx]
+                # print("type of stcd in census: " + str(type(self.fips_to_county_dict)))
+
+                if fips in self.fips_to_county_dict.keys():
+                    county_obj = self.fips_to_county_dict[fips]
+                    # print("type of CO in census: " + str(type(county_obj)))
+                    # ****Why does county_obj come back as a list??
+                    # print(county_obj)
+                    # print("COUNTY OBJ: " + ''.join(county_obj))  ###
+                    county_obj.addPop(str(i), pop)
+                    county_obj.addPopToYear(str(i), pop)
+                else:
+                    print("cannot add population information to county " + fips + " for year " + str(i))
+        return census_dfs_cond
 
     # gets data for the state's counties for 2012 to 2016 (most recent 6 years)
     # and adds up number of cases
@@ -174,13 +232,51 @@ class ReadData:
         summed_cases_data_for_df = {'fips': fips_for_state_counties, 'sum_cases_2012_2016': summed_cases}
         df = pd.DataFrame.from_dict(summed_cases_data_for_df)
 
-        file = "./optimization_data/" + state + "_optimization_data_2012_2016.xlsx"
+        file = "./optimization_data/" + state + "_optimization_data_2012_2016_cases_per_person.xlsx"
 
         df.to_excel(file, na_rep="nan", index=False)
 
         return std_dfs
 
+    def calculate_cpp(self):
+        # iterate over the county dict
+        # self.year_to_cases_dict = {}  # {"year" : cases_for_year}
+        # self.year_to_pop_dict = {}  # {"year" : pop_for_year}
+        for i in range(0, len(self.nj_fips)):
+            curr_fips = self.nj_fips[i]
+            print(curr_fips)
+            county_obj = self.fips_to_county_dict[curr_fips]
+
+            print("adding cpp for " + curr_fips)
+            for i in range(2012, 2017):
+                year_to_cases_dict = county_obj.getYearToCasesDict()
+                # print(year_to_cases_dict)
+                year_to_pop_dict = county_obj.getYearToPopDict()
+                # print(year_to_pop_dict)
+                curr_cpp = float(year_to_cases_dict[str(i)]) / float(year_to_pop_dict[str(i)])
+                print("adding", county_obj.sum_cpp_5_yr, "and", curr_cpp)
+                county_obj.sum_cpp_5_yr += curr_cpp
+                print("==================")
+
+        summed_cases = []
+
+        for fips_code in self.nj_fips:
+            county_obj = self.fips_to_county_dict[fips_code]
+            sum_cases_5yr = county_obj.getCpp()
+            summed_cases.append(sum_cases_5yr)
+
+            # zip fips_for_state_counties and summed_cases
+
+        summed_cases_data_for_df = {'fips': self.nj_fips, 'sum_cases_2012_2016': summed_cases}
+        df = pd.DataFrame.from_dict(summed_cases_data_for_df)
+
+        file = "./optimization_data/" + 'nj' + "_optimization_data_2012_2016_cases_per_person.xlsx"
+
+        df.to_excel(file, na_rep="nan", index=False)
+
 
 rd = ReadData()
-rd.read_std_data('il')
+# rd.read_std_data('il')
 rd.read_std_data('nj')
+rd.read_census_data()
+rd.calculate_cpp()
