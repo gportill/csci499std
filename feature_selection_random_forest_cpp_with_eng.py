@@ -1,11 +1,26 @@
+# doesn't work terribly for 2008 but most are still negative
+
+# lm = RandomForestRegressor(n_estimators=6, random_state=5)
+# 2008: test r^2 = 0.20
+
+# for year 2008:
+# with n_estimators=25, r = 0.229
+# with n_estimators=35, r = 0.254
+# with n_estimators=45, r = 0.267
+
+# 2009:
+# n_estimators=45: r^2 = 0.865
+
 import pandas as pd
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
 import sklearn.model_selection
-from sklearn.linear_model import LinearRegression
-import sklearn.model_selection as model_selection
+from sklearn.ensemble import RandomForestRegressor
 import sklearn.metrics
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
 
 def create_model(year):
     if year < 2006 or year > 2011:
@@ -108,18 +123,19 @@ def create_model(year):
     x = full_df.drop('target_t5', axis=1)
     y = full_df.target_t5
 
-    # -------------Cross Validation --------------------------------
+    # ------------------------ Cross Validation ---------------------
+
     num_folds = 5
     print("PRINTING SCORES")
-    scores = model_selection.cross_val_score(LinearRegression(), x, y, cv=5, scoring='r2')
+    scores = sklearn.model_selection.cross_val_score(RandomForestRegressor(n_estimators=100, random_state=5), x, y, cv=5, scoring='r2')
     print(scores)
     r2_total = 0
     for s in scores:
         r2_total += s
     avg_r2 = r2_total / scores.size
     print("average: " + str(avg_r2))
-    cv_models = model_selection.cross_validate(LinearRegression(), x, y, cv=num_folds, return_estimator=True)
-    cross_val_predict_data = model_selection.cross_val_predict(LinearRegression(), x, y, cv=num_folds)
+    cv_models = sklearn.model_selection.cross_validate(RandomForestRegressor(n_estimators=100, random_state=5), x, y, cv=num_folds, return_estimator=True)
+    cross_val_predict_data = sklearn.model_selection.cross_val_predict(RandomForestRegressor(n_estimators=100, random_state=5), x, y, cv=num_folds)
 
     plt.figure(figsize=(10,8))
     plt.scatter(y, cross_val_predict_data)
@@ -131,9 +147,8 @@ def create_model(year):
     plt.title("Cross Validation for Actual cases per person vs. predicted cases per person in t0=" + str(year))
     plt.show()
 
-    # ----------------------- Creating Array of Top 20 Features -------------------
-
-    feature_coefficients_arr = np.array([m.coef_ for m in cv_models["estimator"]])
+    # -------------- Create Array of top 20 features --------------------
+    feature_coefficients_arr = np.array([m.feature_importances_ for m in cv_models["estimator"]])
     feature_coefficients_df = pd.DataFrame(feature_coefficients_arr, columns=list(x))
     feature_coefficients_df = feature_coefficients_df.agg(["min","median","max"], axis=0).transpose()
     feature_coefficients_df = feature_coefficients_df.reindex(feature_coefficients_df.median(axis=1).abs().sort_values().index)
@@ -142,21 +157,22 @@ def create_model(year):
 
     print(top_20_features)
 
-    # ------------ Feature Selection ------------------------------------------
 
-    rfecv = sklearn.feature_selection.RFECV(estimator=LinearRegression(), step=1, cv=5,
-                  scoring='r2', n_jobs=-1)
-    rfecv.fit(x,y)
+    # ------------- Feature Selection -----------------------------------
+    rfecv = sklearn.feature_selection.RFECV(estimator=RandomForestRegressor(n_estimators=100, random_state=5), step=1, cv=5,
+                                            scoring='r2', n_jobs=-1)
+    rfecv.fit(x, y)
     print(len(rfecv.grid_scores_))
-    fig, ax = plt.subplots(1,1,figsize=(10,8))
+    fig, ax = plt.subplots(1, 1, figsize=(10, 8))
     plt.plot(range(1, len(rfecv.grid_scores_) + 1), rfecv.grid_scores_)
-    plt.xlabel("Number of features selected",fontsize=12)
-    plt.ylabel("Cross validation score (r^2 value)",fontsize=12)
+    plt.xlabel("Number of features selected", fontsize=12)
+    plt.ylabel("Cross validation score (r^2 value)", fontsize=12)
     plt.title("Feature Selection on Linear Regression for Year T0=" + str(year))
     plt.show()
 
-    # ---------- Linear Regression with Only Top Features -----------------------
-    num_top_features = 20
+    # ----------- Random Forests with Only Top Features ----------------
+
+    num_top_features = 10
     remove_features = feature_coefficients_df.head(75 - num_top_features)
     print(top_20_features)
     print(len(remove_features.index))
@@ -165,32 +181,24 @@ def create_model(year):
         x = x.drop([f], axis=1)
     x_train, x_test, y_train, y_test = sklearn.model_selection.train_test_split(x, y, test_size=0.2,
                                                                                 random_state=5)
-    lm = LinearRegression()
+    lm = RandomForestRegressor(n_estimators=100, random_state=5)
     lm.fit(x_train, y_train)
     pred_train = lm.predict(x_train)
     pred_test = lm.predict(x_test)
 
-    coefs_df = pd.DataFrame(zip(x.columns, lm.coef_), columns=['features', 'estimated coefficients'])
-    print(coefs_df)
+    # coefs_df = pd.DataFrame(zip(x.columns, lm.coef_), columns=['features', 'estimated coefficients'])
+    # print(coefs_df)
 
     r2 = sklearn.metrics.r2_score(y_test, pred_test)
     print("r2: " + str(r2))
 
     plt.scatter(y_test, pred_test)
-    plt.xlabel("Actual Cases Per Person")
-    plt.ylabel("Predicted Cases Per Person")
-    plt.title("Linear Regression with Top Features for Year T0=" + str(year))
+    plt.xlabel("Actual cases")
+    plt.ylabel("Predicted cases")
+    plt.title("Actual cases vs. predicted cases in y_test")
     plt.show()
 
 
-
-
-
-
-
-create_model(2011)
-#create_model(2007)
-#create_model(2008)
-#create_model(2009)
-#create_model(2010)
-#create_model(2011)
+# for year in range(2006, 2012):
+#     create_model(year)
+create_model(2006)
