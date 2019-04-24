@@ -25,6 +25,9 @@ std_clinics_per_county = {'34001': 5,
 
 nj_fips = std_clinics_per_county.keys()
 
+def get_clinics_per_county():
+    return std_clinics_per_county
+
 def get_county_adjacency():
     rd = read_data.ReadData()
     rd.read_std_data()  # must be done before reading neighbors
@@ -126,6 +129,6 @@ def make_df(year):
 
     full_df.to_excel(file, na_rep="nan")
 
-
-for i in range(2006, 2012):
-    make_df(i)
+#
+# for i in range(2006, 2012):
+#     make_df(i)
