@@ -25,6 +25,8 @@ std_clinics_per_county = {'17001': 1,
                           '17197': 1,
                           '17201': 1}
 
+
+
 counties_available = ['17001', '17019', '17031', '17037', '17043', '17089', '17091', '17093',
        '17097', '17099', '17111', '17113', '17115', '17119', '17143', '17161',
        '17163', '17167', '17179', '17183', '17197', '17201']
@@ -109,6 +111,9 @@ counties_unavailable = ['17003',
                 '17195',
                 '17199',
                 '17203']
+
+def get_clinics_per_county():
+    return std_clinics_per_county
 
 def get_county_adjacency():
     rd = read_data.ReadData()
@@ -333,5 +338,5 @@ def make_df(year):
     full_df.to_excel(file, na_rep="nan")
 
 
-for i in range(2006, 2012):
-    make_df(i)
+#for i in range(2006, 2012):
+    #make_df(i)
