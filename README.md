@@ -2,20 +2,21 @@
 
 ### Important files ###
 
-* assemble_full_df.py: Assembles a single data frame with year, fips, census variables, and STD cases per county. 
-
-* calculate_eng_features.py: File where engineered features will be calculated. Currently working on migration feature => *start here*
+* prepare_dfs.py: Creates data frame for all variables (STD, census, infected_inflow based off migration data). Saves data as pickle and Excel. 
+    * Pickled data goes into these files: save_adj_fips_dict.p, save_census_dfs.p, save_fips_to_county_dict.p, save_migration_dfs.p, save_std_dfs.p
+    * Data goes into these Excel files: full_features_by_year.xlsx, full_features_mig_no_nan_v.xlsx
 
 * read_data.py: Class for reading in census data, std data, migration data (raw numbers), and county/neighbors dictionary.
 
+* Models (linear regression, gradient boosting regressor, and random forest) are in feature_selection_all_features folder.
+
+* Optimization files:
+    * illinois_data
+    * new_jersey
+    * optimization_data
+
+* Raw data is contained in census_data, chlam_data, migration_data
+
 -----------------------------------------------------------------------
-
-* parseData.py: ?, not needed
-
-* read_in_census data.py: Don't edit this one (edit function in read_data.py instead). 
-
-* read_in_std_data.py: Don't edit this one (edit function in read_data.py instead). 
-
-* read_migration_data.py: Don't edit this one (edit function in read_data.py instead). 
 
 * std_county_map.py: Constructs maps of STD rates over the years.

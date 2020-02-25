@@ -31,7 +31,7 @@ class County:
             return True
         return False
 
-# When using this class, call the functions in this order:
+# When using ReadData class, call the functions in this order:
 # 1. read_std_data
 # 2. read_county_neighbors
 # 3. read_census_data

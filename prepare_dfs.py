@@ -112,17 +112,18 @@ print("reading migration data")
 migration_dfs = rd.read_migration_data()
 fips_to_county_dict = rd.get_fips_to_county_dict()
 
-pickle.dump( std_dfs, open( "save_std_dfs.p", "wb" ) )
-pickle.dump( adj_fips_dict, open( "save_adj_fips_dict.p", "wb" ) )
-pickle.dump( census_dfs, open( "save_census_dfs.p", "wb" ) )
-pickle.dump( migration_dfs, open( "save_migration_dfs.p", "wb" ) )
-pickle.dump( fips_to_county_dict, open( "save_fips_to_county_dict.p", "wb" ) )
-std_dfs = pickle.load( open( "save_std_dfs.p", "rb" ) )
-adj_fips_dict = pickle.load( open( "save_adj_fips_dict.p", "rb" ) )
-census_dfs = pickle.load( open( "save_census_dfs.p", "rb" ) )
-migration_dfs = pickle.load( open( "save_migration_dfs.p", "rb" ) )
-fips_to_county_dict = pickle.load( open( "save_fips_to_county_dict.p", "rb" ) )
+pickle.dump(std_dfs, open("save_std_dfs.p", "wb"))
+pickle.dump(adj_fips_dict, open("save_adj_fips_dict.p", "wb"))
+pickle.dump(census_dfs, open("save_census_dfs.p", "wb"))
+pickle.dump(migration_dfs, open("save_migration_dfs.p", "wb"))
+pickle.dump(fips_to_county_dict, open("save_fips_to_county_dict.p", "wb"))
 # ------ end uncomment pickle section ------
+
+std_dfs = pickle.load(open("save_std_dfs.p", "rb"))
+adj_fips_dict = pickle.load(open("save_adj_fips_dict.p", "rb"))
+census_dfs = pickle.load(open("save_census_dfs.p", "rb"))
+migration_dfs = pickle.load(open("save_migration_dfs.p", "rb"))
+fips_to_county_dict = pickle.load(open("save_fips_to_county_dict.p", "rb"))
 
 # list of years in the data range
 years = []
