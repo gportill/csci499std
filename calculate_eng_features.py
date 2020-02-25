@@ -3,17 +3,7 @@ import pandas as pd
 import pickle
 from sklearn import preprocessing
 
-# for a particular year
-    # for each row of STD data: => county i (for each row, we will look at county i's neighbors in migration data)
-        # store the county's neighbors in a list (available in adj_fips_dict)
-        # initialize expected_infected = 0
-        # for each neighbor j in the list:
-            # find neighbor j's migration rate to county i in mig_dfs for this year
-            # find neighbor j's total pop in census data for this year
-            # find neighbor's std cases in std data for this year
-            # expected_infected = calculate std_cases / total_pop * mig_rate
-            # add that calculation to the expected_infected variable (so you are adding up expected_infected for all of their neighbors). this number will be the feature in the end.
-
+# rename the census variables that will be kept
 cols_to_keep = {"Geo_FIPS": "fips",
                 "SE_A00001_001": "total_pop",
                 "SE_A00002_001": "pop_density",
@@ -110,88 +100,93 @@ cols_to_keep = {"Geo_FIPS": "fips",
 
 cols_to_keep_list = list(cols_to_keep.keys())
 
-#uncomment the first time you run it, comment it out for all the runs after
-# rd = read_data.ReadData()
-# print("reading read_std_data")
-# std_dfs = rd.read_std_data()
-# print("reading adj_fips_dict")
-# adj_fips_dict = rd.read_county_neighbors()
-# print("reading census_data")
-# census_dfs = rd.read_census_data()
-# print("before migration_dfs")
-# migration_dfs = rd.read_migration_data()
-# print("after migration_dfs")
-# fips_to_county_dict = rd.get_fips_to_county_dict()
+# ------ uncomment the first time you run it; comment it out for all the runs after ------
+rd = read_data.ReadData()
+print("reading read_std_data")
+std_dfs = rd.read_std_data()
+print("reading adj_fips_dict")
+adj_fips_dict = rd.read_county_neighbors()
+print("reading census_data")
+census_dfs = rd.read_census_data()
+print("reading migration data")
+migration_dfs = rd.read_migration_data()
+fips_to_county_dict = rd.get_fips_to_county_dict()
 
-# pickle.dump( std_dfs, open( "save_std_dfs.p", "wb" ) )
-# pickle.dump( adj_fips_dict, open( "save_adj_fips_dict.p", "wb" ) )
-# pickle.dump( census_dfs, open( "save_census_dfs.p", "wb" ) )
-# pickle.dump( migration_dfs, open( "save_migration_dfs.p", "wb" ) )
-# pickle.dump( fips_to_county_dict, open( "save_fips_to_county_dict.p", "wb" ) )
+pickle.dump( std_dfs, open( "save_std_dfs.p", "wb" ) )
+pickle.dump( adj_fips_dict, open( "save_adj_fips_dict.p", "wb" ) )
+pickle.dump( census_dfs, open( "save_census_dfs.p", "wb" ) )
+pickle.dump( migration_dfs, open( "save_migration_dfs.p", "wb" ) )
+pickle.dump( fips_to_county_dict, open( "save_fips_to_county_dict.p", "wb" ) )
 std_dfs = pickle.load( open( "save_std_dfs.p", "rb" ) )
 adj_fips_dict = pickle.load( open( "save_adj_fips_dict.p", "rb" ) )
 census_dfs = pickle.load( open( "save_census_dfs.p", "rb" ) )
 migration_dfs = pickle.load( open( "save_migration_dfs.p", "rb" ) )
 fips_to_county_dict = pickle.load( open( "save_fips_to_county_dict.p", "rb" ) )
+# ------ end uncomment pickle section ------
 
+# list of years in the data range
 years = []
 for i in range(2006, 2017):
     years.append(str(i))
 
-# --------- below this line working on creating infected migration map inflow for all years
+# ------ feature engineering to estimate the number of people with an STD entering each county ------
+# to determine the expected infected inflow of migrants:
+    # for each year, for each county i, determine county i's neighbors
+    # for each neighbor j, find j's migration rate to county i and find j's number of std_cases
+    # expected_infected_from_j = std_cases_j / total_pop_j * mig_rate_from_j_to_i
+    # county i's total expected_infected is the sum of expected_infected coming into county i for each neighbor j
+
 year_to_county_to_STD_inflows = {}
 
-#for each year
-for i in range(2006,2017):
-    mig_df = migration_dfs[str(i)]
+for i in range(2006, 2017):
+    mig_df = migration_dfs[str(i)]  # look up the migration data frame for this year
     mig_df.drop_duplicates(subset=["destination", "origin"],  keep='first', inplace=True)
-    mig_df.set_index(["destination", "origin"], inplace=True) #makes it a multi index
+    mig_df.set_index(["destination", "origin"], inplace=True)  # makes it a multi index
 
-    std_df = std_dfs[str(i)].copy()
+    std_df = std_dfs[str(i)].copy()  # std_df is the data frame of std data for this year
     std_df.set_index("Geography",inplace=True)
 
-    census_df = census_dfs[str(i)].copy()
+    census_df = census_dfs[str(i)].copy()  # census_df is the data frame of census data for this year
     census_df.set_index("Geo_FIPS",inplace=True)
 
     census_total_pop_column = 'SE_A00001_001'
     dest_to_inflow = {}
-    #for each county
+    # for each county
     for destination in fips_to_county_dict.keys():
         total_infected_inflow = 0
-        #for each neighbor
+        # for each neighbor
         for origin in fips_to_county_dict[destination].neighbors:
-            #calculate infected inflow from this neighbor
-            #get cases of infection
+            # calculate infected inflow from this neighbor
+            # get cases of infection
             cases = '0'
-            #print(origin)
-            #print(std_df.index)
             if origin in std_df.index:
                 cases = std_df.loc[origin]["Cases"]
-            #get the population
+            # get the population
             pop = '0'
-            #pop_rows = census_df[census_df["Geo_FIPS"] == origin]
             if origin in census_df.index:
                 pop = census_df.loc[origin][census_total_pop_column]
-            #calculate ratio
+            # calculate ratio of cases to total population
             if float(pop.replace(",", "")) == 0:
                 infected_ratio = 0
             else:
-                infected_ratio = float(cases.replace(",", ""))/float(pop.replace(",", ""))
-            # ratio * num migrating to dest = infected flow
+                infected_ratio = float(cases.replace(",", "")) / float(pop.replace(",", ""))
+
+            # infected inflow = infected_ratio * num migrating to dest
             if (destination, origin) in mig_df.index:
+                # num_exemps is number of migrants from county i to neighbor j
                 num_exemps = float(mig_df.loc[destination, origin]["num_exemps"])
 
             infected_flow = infected_ratio * num_exemps
-            #print(infected_flow)
-            total_infected_inflow += infected_flow
-            #print(total_infected_inflow)
-        #add total to dictionary
-        dest_to_inflow[destination] = total_infected_inflow
-    #add dictionary to dictionary
-    year_to_county_to_STD_inflows[str(i)] = dest_to_inflow
+            total_infected_inflow += infected_flow  # sum up infected_inflow for all of i's neighbors
 
-# --------- Compiling everything into one data frame ---------
-col_data = [[] for i in range(98)]  # array of empty lists.
+        # add total to dictionary
+        dest_to_inflow[destination] = total_infected_inflow
+    # add dictionary to dictionary
+    year_to_county_to_STD_inflows[str(i)] = dest_to_inflow
+# ------ end feature engineering for infected_inflow variable ------
+
+# ------ combine all 98 variables into one data frame ------
+col_data = [[] for i in range(98)]  # array of empty lists
 # index 0 is year
 # indices 1 to 93 are census data
 # index 94 is std cases PER PERSON
@@ -205,20 +200,20 @@ for i in range(2006, 2017):
     year = str(i)
     census_df = census_dfs[year]
 
-    # loop over rows in this year's census data
+    # loop over rows in year i's census data
     for idx, val in census_df.iterrows():
         counter += 1
         fips = census_df["Geo_FIPS"][idx]
-        if fips in fips_to_county_dict.keys():  # skip any counties whose FIPS are not in fips_to_county_dict
-            county = fips_to_county_dict[fips]  # county is a county object
-        else:
+        if fips in fips_to_county_dict.keys():
+            county = fips_to_county_dict[fips]  # county is a County object
+        else:  # skip any counties whose FIPS are not in fips_to_county_dict
             continue
 
         col_data[0].append(i)  # set year for this row
 
         total_pop_val = 0
 
-        # adding census data for all the census columns we want to keep
+        # add census data for all the census columns we want to keep
         for k in range(0, len(cols_to_keep_list)):
             curr_column = cols_to_keep_list[k]
             value = census_df[curr_column][idx]
@@ -228,14 +223,13 @@ for i in range(2006, 2017):
 
         # now columns 0 and 1-93 are filled
 
-        # add cases info: num_cases / total_pop
+        # add cases data
         if county.year_to_cases_dict[year] == 'Data not available':
             cases = 0
             cases_per_person = 0
         else:
-            cases = float(county.year_to_cases_dict[year].replace(',', ''))
-            cases_per_person = float(county.year_to_cases_dict[year].replace(',', '')) / float(total_pop_val)
-        # print(cases)
+            cases = float(county.year_to_cases_dict[year])
+            cases_per_person = float(county.year_to_cases_dict[year]) / float(total_pop_val)
         col_data[94].append(cases_per_person)
         col_data[96].append(cases)
         col_data[97].append(cases)
@@ -243,8 +237,6 @@ for i in range(2006, 2017):
         # add infected_inflow data
         inflow_df = year_to_county_to_STD_inflows[year]
         col_data[95].append(inflow_df[county.fips])
-
-    # print("end for " + str(i) + ": " + str(counter))
 
 census_col_names = census_dfs["2006"].columns
 descriptive_census_col_names = []
@@ -263,40 +255,41 @@ data_with_col_names = dict(zip(column_names, col_data))
 full_df = pd.DataFrame(data_with_col_names)
 # column_names is header
 # col_data has all the information, one list per column
-
+print("full_df before normalization")
 print(full_df.head())
-# --------------------------------------------------------------------
+# ------ full_df now has all data for all years------
 
-# --------- normalize all the columns except cases_per_person --------
+# ------ normalize all variables but fips, years, cases_per_person, and cases_raw ------
 col_names_to_normalize = list(full_df.columns.values)
+
+# remove variables that do not need to be normalized
 col_names_to_normalize.remove('fips')
 col_names_to_normalize.remove('year')
 col_names_to_normalize.remove('cases_per_person')
 col_names_to_normalize.remove('cases_raw')
-
-#for col in final_col_names:
-#     x = full_df[[col]].values.astype(float)
-#     min_max_scaler = preprocessing.MinMaxScaler()
-#     x_scaled = min_max_scaler.fit_transform(x)
-#     df_normalized =
 
 min_max_scaler = preprocessing.MinMaxScaler()
 x = full_df[col_names_to_normalize].values
 x_scaled = min_max_scaler.fit_transform(x)
 df_temp = pd.DataFrame(x_scaled, columns=col_names_to_normalize, index=full_df.index)
 full_df[col_names_to_normalize] = df_temp
+print("full_df after normalization")
 print(full_df.head())
-# --------------------------------------------------------------------
+# ------ end normalization ------
 
+# ------ remove NaN values from full_df ------
 full_df.columns[full_df.isna().any()].tolist()
 
+# create data frame without NaN values
 full_df_no_na = full_df.copy()
 full_df_no_na = full_df_no_na.dropna(axis='columns', how='any')
+full_df_no_na.to_excel("full_features_mig_no_nan_v.xlsx", na_rep="nan", index=False)
 
 # If you want all the data (with columns that contain NaN values), save full_df to an excel
 # full_df.to_excel("full_features_mig_v.xlsx", na_rep="nan", index=False)
-full_df_no_na.to_excel("full_features_mig_no_nan_v.xlsx", na_rep="nan", index=False)
+# ------ end remove NaN -------
 
+# ------ create data frames for each year ------
 year_dfs = {}
 year_dfs[2006] = (full_df_no_na[:782])
 year_dfs[2007] = (full_df_no_na[782:1569])
@@ -310,25 +303,9 @@ year_dfs[2014] = (full_df_no_na[6394:7210])
 year_dfs[2015] = (full_df_no_na[7210:8028])
 year_dfs[2016] = (full_df_no_na[8028:])
 
-# for i in range(2006,2017):
-#     print(str(year_dfs[i].count))
-
-'''
-start for 2006: 0
-start for 2007: 795
-start for 2008: 1595
-start for 2009: 2397
-start for 2010: 3202
-start for 2011: 4020
-start for 2012: 4842
-start for 2013: 5667
-start for 2014: 6495
-start for 2015: 7323
-start for 2016: 8153
-'''
-
 writer = pd.ExcelWriter('full_features_by_year.xlsx', engine='xlsxwriter')
 for i in range(2006, 2017):
     year = str(i)
     year_dfs[i].to_excel(writer, sheet_name=year)
 writer.save()
+# ------ end creating data frames for each year ------
