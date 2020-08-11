@@ -5,8 +5,7 @@ import matplotlib.pyplot as plt
 import sklearn.model_selection
 from sklearn.ensemble import RandomForestRegressor
 import sklearn.metrics
-from sklearn.preprocessing import StandardScaler
-from sklearn.decomposition import PCA
+import sklearn.feature_selection
 
 
 def create_model(year):

@@ -6,6 +6,7 @@ import sklearn.model_selection
 from sklearn.linear_model import LinearRegression
 import sklearn.model_selection as model_selection
 import sklearn.metrics
+import sklearn.feature_selection
 
 def make_df(year):
     if year < 2006 or year > 2011:
